@@ -1,12 +1,13 @@
 #-*-coding: utf-8 -*-
-
-import random
 import base64
+import random
 import logging
 from  settings import PROXIES 
+from scrapy.utils.project import get_project_settings
+from mayi_proxy import get_proxy_authHeader
 
 class RotateUserAgent():
-    ''' Randomly rotate user agents based on a predefined list'''
+    '''动态随机设置User_Agent'''
     def __init__(self,user_agents):
         self.user_agents = user_agents
 
@@ -18,7 +19,7 @@ class RotateUserAgent():
         request.headers.setdefault('USER_AGENTS',random.choice(self.user_agents))
 
 class RotateHttpProxy():
-
+    '''动态随机设置代理IP（万人骑）'''
     def process_request(self,request,spider):
         proxy = random.choice(PROXIES)
         request.meta['proxy'] = 'http://%s' % proxy['ip_port']
@@ -30,3 +31,25 @@ class RotateHttpProxy():
     def process_exception(self,request,exception,spider):
         proxy = request.meta['proxy']
         logging.info('Removing failed proxy <%s>,%d proxies left' % (proxy,len(PROXIES)-1))  
+
+class MayiHttpProxy():
+    '''基于蚂蚁代理设置代理IP'''
+    settings = get_project_settings()
+    def process_request(self,request,spider):
+        #proxy = get_proxy_ip(MayiHttpProxy.settings['APPKEY'],MayiHttpProxy.settings['SECRET'],MayiHttpProxy.settings['SERVERIP'])    #利用蚂蚁代理获取动态代理IP
+        #request.meta['proxy'] = 'http://%s' % proxy 
+        proxy = MayiHttpProxy.settings['SERVERIP']
+        request.meta['proxy'] = 'http://%s' % proxy 
+        authHeader = get_proxy_authHeader(MayiHttpProxy.settings['APPKEY'],MayiHttpProxy.settings['SECRET']) 
+        request.headers['Proxy-Authorization'] = authHeader
+   
+    def process_exception(self,request,exception,spider):
+        proxy = request.meta['proxy']
+        logging.info('Removing failed proxy <%s>' % proxy)  
+
+if __name__=="__main__":
+    settings = get_project_settings()
+    authHeader = get_proxy_authHeader(settings['APPKEY'],settings['SECRET'])    #利用蚂蚁代理获取动态代理IP
+    print authHeader
+
+

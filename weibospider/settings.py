@@ -18,8 +18,8 @@ ITEM_PIPELINES={#'weibospider.pipelines.WeibospiderPipeline':300}
                 'weibospider.oracle_pipelines.WeibospiderPipeline':300
                }
 #Mysql数据库配置
-MYSQL_HOST = 'localhost'
-MYSQL_DBNAME = 'weiboanalysis'
+MYSQL_HOST = '10.109.243.246'
+MYSQL_DBNAME = 'cauc_microblog'
 MYSQL_USER = 'root'
 MYSQL_PASSWD = 'root'
 
@@ -28,10 +28,14 @@ ORACLE_DSN = '10.108.147.143/orcl'
 ORACLE_USER = 'bupt'       #'ZTQ'
 ORACLE_PASSWD = 'bupt'     #'fnl12345678'
 
+#蚂蚁代理配置
+APPKEY = "153754507"
+SECRET = "a24846208df1fa61dc23c87d3fbc38fe"
+SERVERIP = "123.56.251.212:8123" #蚂蚁代理服务器地址
+
 #微博爬取内容配置
-USER_NAME = '18600299007' #'13920979915'   #'18600299007'
-PASS_WORD = '19911007'#'wangjie42685' #'19911007'
-#UID = '3655612552' #'5589322664'  #'3655612552'  #'2728266823'
+USER_NAME = '13920979915'   #'18600299007'
+PASS_WORD = 'wangjie42685' #'19911007'
 PAGE_NUM = 1   #爬取微博内容页面数
 
 FOLLOW_PAGE_NUM = 1  #爬取用户关注列表页面数
@@ -107,9 +111,10 @@ DOWNLOAD_DELAY = 10
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
-    'weibospider.middlewares.RotateUserAgent': 1,
-    'weibospider.middlewares.RotateHttpProxy': None,  #100,
-    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware':None   #110
+    'weibospider.middlewares.RotateUserAgent': 1,  #动态随机设置UserAgent
+    #'weibospider.middlewares.RotateHttpProxy': None,  #100, #动态代理IP设置
+    'weibospider.middlewares.MayiHttpProxy': None, #100, #动态代理IP设置
+    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': None #110
 }
 
 # Enable or disable extensions

@@ -1,16 +1,20 @@
 #-*- coding:utf-8 -*-
-import MySQLdb
 import sys
+import logging
+from scrapy.utils.project import get_project_settings
+import MySQLdb
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
 class MysqlStore:
     '''Mysql数据库连接与命令操作'''
+    settings = get_project_settings()
+
     def get_connection(self):
         '''连接数据库'''
         try:
-            conn = MySQLdb.connect(host='10.108.147.90',user='root',passwd='root',db='cauc_microblog',port=3306)
+            conn = MySQLdb.connect(host=MysqlStore.settings['MYSQL_HOST'],user=MysqlStore.settings['MYSQL_USER'],passwd=MysqlStore.settings['MYSQL_PASSWD'],db=MysqlStore.settings['MYSQL_DBNAME'],port=3306)
             conn.set_character_set('utf8')
             print 'mysql_connectinon success!!'
             return conn

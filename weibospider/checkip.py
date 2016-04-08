@@ -23,7 +23,7 @@ def check_proxy(protocol,ip_port):
 def main():
     socket.setdefaulttimeout(30)
     protocol = 'http'
-    ip_port = '117.136.234.6:80'
+    ip_port = '182.99.196.146:80'
     result = check_proxy(protocol,ip_port)
     if result:
         print 'Work!!'
