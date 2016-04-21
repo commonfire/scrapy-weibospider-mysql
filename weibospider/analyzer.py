@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-   
-import re
+import logging
 import json
+import re
 from pyquery import PyQuery as pq
+
+logger = logging.getLogger(__name__)
 
 class Analyzer:
     '''网页内容分析'''
@@ -237,7 +240,9 @@ class Analyzer:
             total_pq = pq(unicode(data3))
             return total_pq
         else:
-            print "get_html wrong!"                                            
+            #print "get_html wrong!"                                            
+            logger.warning("parse html wrong!!")
+            return None
    
     
     def get_userinfohref(self,total_pq):

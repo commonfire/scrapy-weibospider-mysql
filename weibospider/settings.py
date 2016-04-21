@@ -14,14 +14,15 @@ BOT_NAME = 'weibospider'
 SPIDER_MODULES = ['weibospider.spiders']
 NEWSPIDER_MODULE = 'weibospider.spiders'
 ITEM_PIPELINES={#'weibospider.pipelines.WeibospiderPipeline':300}
-                'weibospider.user_imagepipelines.UserImagesPipeline':400, 
-                'weibospider.oracle_pipelines.WeibospiderPipeline':300
+                #'weibospider.user_imagepipelines.UserImagesPipeline':400, 
+                'weibospider.pipelines.WeibospiderPipeline':300
                }
 #Mysql数据库配置
 MYSQL_HOST = '10.109.243.246'
 MYSQL_DBNAME = 'cauc_microblog'
 MYSQL_USER = 'root'
 MYSQL_PASSWD = 'root'
+FETCHSIZE = 4
 
 #Oracle数据库配置
 ORACLE_DSN = '10.108.147.143/orcl'
@@ -34,8 +35,8 @@ SECRET = "a24846208df1fa61dc23c87d3fbc38fe"
 SERVERIP = "123.56.251.212:8123" #蚂蚁代理服务器地址
 
 #微博爬取内容配置
-USER_NAME = '13920979915'   #'18600299007'
-PASS_WORD = 'wangjie42685' #'19911007'
+USER_NAME = '18600299007'   #'13920979915'   #'18600299007'
+PASS_WORD = '19911007'      #'wangjie42685' #'19911007'
 PAGE_NUM = 1   #爬取微博内容页面数
 
 FOLLOW_PAGE_NUM = 1  #爬取用户关注列表页面数
@@ -43,11 +44,17 @@ FOLLOWER_PAGE_NUM = 1  #爬取用户粉丝列表页面数
 
 SEARCH_PAGE_NUM = 1  #爬取基于关键词搜索的页面数
 
-#图片下载配置
+#微博循环爬取时间间隔配置
+KEYWORD_INTERVAL = 60  #舆情关键词循环爬取间隔，单位：秒
+
+#图片下载配置0
 #IMAGES_STORE = '/home/hadoop_user/scrapy-weibospider/weibospider/userphoto'  #图片存储位置
 IMAGES_STORE = '/home/hadoop_user/javaproject/weiboanalysis-1/WebContent/images/userphoto'  #图片存储位置
 IMAGES_EXPIRES = 90          #图片失效期限天数
 IMAGES_THUMBS = {'small':(40,40)}  #设置图片缩略图长度和宽度
+
+#日志log配置文件
+#LOG_ENABLED = False
 
 #User-Agent 或代理IP轮换
 USER_AGENTS = [
@@ -70,9 +77,9 @@ USER_AGENTS = [
 ]
 
 PROXIES = [
-    {'ip_port': '117.136.234.6:80', 'user_pass': None},
-   # {'ip_port': '210.75.240.62:3128', 'user_pass': None},
-   # {'ip_port': '183.207.229.11:80', 'user_pass': None},
+   # {'ip_port': '123.56.99.49:3128', 'user_pass': None},
+   # {'ip_port': '182.92.196.58:3128', 'user_pass': None},
+    {'ip_port': '124.200.37.38:9000', 'user_pass': None},
 ] 
 
 
@@ -112,9 +119,9 @@ DOWNLOAD_DELAY = 10
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
     'weibospider.middlewares.RotateUserAgent': 1,  #动态随机设置UserAgent
-    #'weibospider.middlewares.RotateHttpProxy': None,  #100, #动态代理IP设置
-    'weibospider.middlewares.MayiHttpProxy': None, #100, #动态代理IP设置
-    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': None #110
+    'weibospider.middlewares.RotateHttpProxy': None,  #100, #动态代理IP设置
+    'weibospider.middlewares.MayiHttpProxy': None, #100, #蚂蚁动态代理IP设置
+    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': None
 }
 
 # Enable or disable extensions

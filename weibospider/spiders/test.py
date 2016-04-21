@@ -14,6 +14,9 @@ from scrapy.http.cookies import CookieJar
 from scrapy.utils.project import get_project_settings
 from weibospider.items import WeibospiderItem
 from scrapy.settings import Settings
+from scrapy.crawler import CrawlerProcess
+from scrapy.xlib.pydispatch import dispatcher
+from scrapy import signals
 from settings import USER_NAME
 #应用程序自定义模块
 import getinfo
@@ -33,6 +36,15 @@ class WeiboSpider(CrawlSpider):
     start_password = settings['PASS_WORD'] #登录用户密码
     #start_uid = settings['UID']
 
+    #def __init__(self):
+
+        #dispatcher.connect(self.spider_closed,signals.spider_closed)
+
+    def spider_closed(self,spider,reason):
+        print "spider closed...."
+        #SpiderClass = type(spider)
+        #self.crawlerProcess.crawl(SpiderClass())
+        
 
     def start_requests(self):
         username = WeiboSpider.start_username
@@ -83,11 +95,12 @@ class WeiboSpider(CrawlSpider):
                 print 'Login Fail!!!!'
         except:
             print 'Login Error!!!!'
-        request = response.request.replace(url=login_url,meta={'cookiejar':response.meta['cookiejar']},method='get',callback=self.get_searchpage)  #GET请求login_url获取返回的cookie，后续发送Request携带此cookie
+        request = response.request.replace(url=login_url,meta={'cookiejar':response.meta['cookiejar']},method='get',callback=self.test)  #GET请求login_url获取返回的cookie，后续发送Request携带此cookie
         return request
 
-    def get_searchpage(self, response):
-        cookie_jar = response.meta['cookiejar']
-        cookie_jar.extract_cookies(response,response.request)
-        for cookie in cookie_jar:
-            print "!!!!",cookie
+    def test(self, response):
+        print "do nothing, just testing.."
+#        cookie_jar = response.meta['cookiejar']
+#        cookie_jar.extract_cookies(response,response.request)
+#        for cookie in cookie_jar:
+#            print "!!!!",cookie

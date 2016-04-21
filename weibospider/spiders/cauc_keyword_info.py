@@ -4,6 +4,7 @@ import re
 import base64
 import binascii
 import logging
+import time
 #python第三方模块
 import rsa
 import scrapy
@@ -13,18 +14,22 @@ from scrapy.http import Request,FormRequest
 from scrapy.http.cookies import CookieJar
 from scrapy.utils.project import get_project_settings
 from weibospider.items import WeibospiderItem
-from scrapy.settings import Settings
 from settings import USER_NAME
 #应用程序自定义模块
-import getinfo
 from analyzer import Analyzer
+from analyzers.format_time import *
+from analyzers.keyword_info_analyzer import keyword_info_analyzer   
+from analyzers.util import get_times_fromdb
+from datamysql import MysqlStore
 from dataoracle import OracleStore
 from getpageload import GetWeibopage
-from dataoracle import OracleStore
+from getsearchpage import GetSearchpage
+import getinfo
 
 logger = logging.getLogger(__name__)
 
 class WeiboSpider(CrawlSpider):
+    '''舆情关键词检索爬虫'''
     name = 'cauc_keyword_info'
     allowed_domains = ['weibo.com','sina.com.cn']
     settings = get_project_settings()
@@ -78,16 +83,73 @@ class WeiboSpider(CrawlSpider):
             login_url = p.search(response.body).group(1)
             ret_res = re.search('retcode=0',login_url)
             if ret_res:
-                print 'Login Success!!!!'
+                logger.info('Login Success!!!!')
             else:
-                print 'Login Fail!!!!'
+                logger.error('Login Fail!!!!')
         except:
-            print 'Login Error!!!!'
-        request = response.request.replace(url=login_url,meta={'cookiejar':response.meta['cookiejar']},method='get',callback=self.get_searchpage)  #GET请求login_url获取返回的cookie，后续发送Request携带此cookie
+            print logger.error('Login Error!!!!')
+        request = response.request.replace(url=login_url,meta={'cookiejar':response.meta['cookiejar']},method='get',callback=self.search_from_keywordDB)  #GET请求login_url获取返回的cookie，后续发送Request携带此cookie
         return request
 
-    def get_searchpage(self, response):
+    def store_cookie(self, response):
+        '''存储登陆后获取的cookie'''
         cookie_jar = response.meta['cookiejar']
         cookie_jar.extract_cookies(response,response.request)
         for cookie in cookie_jar:
             print "!!!!",cookie
+    
+    def search_from_keywordDB(self,response):
+        db = MysqlStore();conn = db.get_connection()
+        main_url = "http://s.weibo.com/weibo/"
+        getsearchpage = GetSearchpage()
+     
+        sql1 = "select keyword from cauc_keyword_test_copy where is_search = 0"
+        cursor = db.select_operation(conn,sql1)
+        for round in range(1):  #遍历数据库的轮数
+            for keyword in cursor.fetchall():
+                keyword = keyword[0]
+                logger.info("this is the unsearched keyword:%s",keyword)
+                sql2 = "update cauc_keyword_test_copy set is_search = 1 where keyword = '%s'" % keyword
+                db.update_operation(conn,sql2)
+                search_url = main_url + getsearchpage.get_searchurl(keyword)
+                yield Request(url=search_url,meta={'cookiejar':response.meta['cookiejar'],'search_url':search_url,'keyword':keyword},callback=self.parse_total_page)
+
+            logger.info("current timestamp:%d",int(time.time()))
+            #设置循环爬取间隔
+            time.sleep(WeiboSpider.settings['KEYWORD_INTERVAL']) 
+
+            sql3 = "select keyword from cauc_keyword_test_copy where is_search = 1"
+            cursor = db.select_operation(conn,sql3)
+            for keyword in cursor.fetchall():
+                keyword = keyword[0]
+                logger.info("this is the searched keyword:%s",keyword)
+
+                end_time = get_current_time()
+                start_time = get_time_by_interval(int(time.time()),3600)  #爬取3600秒，即1小时前的内容
+                
+                search_url = main_url + getsearchpage.get_searchurl_time(keyword,start_time,end_time)
+                yield Request(url=search_url,meta={'cookiejar':response.meta['cookiejar'],'search_url':search_url,'keyword':keyword},callback=self.parse_total_page)
+        conn.close()
+
+    def parse_total_page(self,response):
+        '''获取需要爬取的搜索结果总页数'''
+        analyzer = Analyzer()
+        total_pq = analyzer.get_html(response.body,'script:contains("W_pages")')
+        keyword_analyzer = keyword_info_analyzer()
+        total_pages = keyword_analyzer.get_totalpages(total_pq)  #需要爬取的搜索结果总页数
+        for page in range(1):  #此处更改为total_pages
+            search_url = response.meta['search_url'] + str(page + 1)  #此处添加for循环total_pages
+            yield Request(url=search_url,meta={'cookiejar':response.meta['cookiejar'],'keyword':response.meta['keyword']},callback=self.parse_keyword_info)
+
+    def parse_keyword_info(self,response):
+        '''获取搜索结果信息'''
+        item = WeibospiderItem()
+        analyzer = Analyzer()
+        total_pq = analyzer.get_html(response.body,'script:contains("feed_content wbcon")') 
+        keyword_analyzer = keyword_info_analyzer()
+        if total_pq is not None:
+            item['keyword_uid'],item['keyword_alias'],item['keyword_content'],item['keyword_publish_time'] = keyword_analyzer.get_keyword_info(total_pq)
+            item['keyword'] = response.meta['keyword']
+            if item['keyword_uid']: #即此时item['keyword_uid']不为空，有解析内容
+                return item
+

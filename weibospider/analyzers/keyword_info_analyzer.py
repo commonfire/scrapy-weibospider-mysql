@@ -1,20 +1,71 @@
 # -*- coding: utf-8 -*-
+import logging
+import sys
 import re
 from pyquery import PyQuery as pq
-import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
+logger = logging.getLogger(__name__)
+
 class keyword_info_analyzer:
     '''舆情关键词搜索结果解析''' 
+    
+    def __init__(self):
+        self.keyword_uid = []            #与关键词相关的用户uid
+        self.keyword_alias = []          #与关键词相关的用户昵称 
+        self.keyword_publish_time = []   #与关键词相关用户发表微博时间
+        self.keyword_content = []        #与关键词相关用户发表微博内容
+
     def get_totalpages(self,total_pq):
         '''获取关键词搜索结果总页数'''
+        if total_pq is None:
+            return 1
         data = total_pq("div.W_pages").find('li')
         total_page = len(data)
         if total_page == 0:   #此时没有页数列表，即只有一页
             return 1
         else:
             return total_page
+
+    def get_keyword_info(self,total_pq):
+        '''获取舆情关键词相关信息'''
+        data0 = total_pq("div.search_rese.W_tc")
+        if not data0: #此时data0没有匹配结果，表示页面有相关搜索结果
+            data1 = total_pq("div.feed_content")
+            data2 = total_pq("div.content").children("div.feed_from")
+            
+            for dku1,dku2 in zip(data1,data2):
+                dku1 = pq(dku1)
+                dku2 = pq(dku2)
+
+                a_tag = dku1.children('a')
+                if len(a_tag) >= 2 and (a_tag.eq(1).attr('class') is not None) and (a_tag.eq(1).attr('class') == "approve_co"):
+                    logger.info(" 该账号为企业认证账号company_approve")
+                    continue
+                
+                content = dku1.children('p.comment_txt').text() #与关键词相关用户发表微博内容
+                self.keyword_content.append(content)
+                 
+                alias = dku1.find('a').eq(0).attr('nick-name')   #获取舆情关键词相关用户昵称
+                self.keyword_alias.append(alias)
+
+                href = dku1.find('a').eq(0).attr('usercard')     #获取舆情关键词相关用户uid
+                p = re.compile("id=(\d*)&",re.S)
+                match = p.search(unicode(href))
+                if match:
+                      self.keyword_uid.append(match.group(1))
+                else:
+                    self.keyword_uid.append("")
+                    logger.warning("parse keyuser uid wrong!!")
+
+                time = dku2.find('a').eq(0).attr("title")
+                self.keyword_publish_time.append(time)
+        else:
+            print "没有搜索结果"
+
+        return self.keyword_uid,self.keyword_alias,self.keyword_content,self.keyword_publish_time
+
 
 if __name__ == '__main__':
     analyzer = keyword_info_analyzer()
@@ -26,6 +77,6 @@ if __name__ == '__main__':
               <!-- /未登录提示 --> 
               </div>"""
     s1 = """<div class="WB_cardwrap S_bg2 relative">"""
-    total_pq = pq(unicode(s)) 
+    total_pq = pq(unicode(s1)) 
     print analyzer.get_totalpages(total_pq)
        

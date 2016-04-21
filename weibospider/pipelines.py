@@ -31,7 +31,7 @@ class WeibospiderPipeline(object):
             db = settings['MYSQL_DBNAME'],
             user = settings['MYSQL_USER'],
             passwd = settings['MYSQL_PASSWD'],
-            charset = 'utf8',
+            charset = 'utf8mb4',
         )
         dbpool = adbapi.ConnectionPool('MySQLdb',**dbargs)
         return cls(dbpool)
@@ -39,6 +39,8 @@ class WeibospiderPipeline(object):
     def process_item(self,item,spider):
         if spider.name == 'keyweibocontent':
             d = self.dbpool.runInteraction(self._keyweibocontent_insert,item,spider)  
+        elif spider.name == 'cauc_keyword_info': #舆情关键词检索信息插入
+            d = self.dbpool.runInteraction(self._keyword_info_insert,item,spider)
         elif spider.name == 'userfollow':
             d = self.dbpool.runInteraction(self._userfollow_insert,item,spider)  
         elif spider.name == 'userinfo':
@@ -48,13 +50,19 @@ class WeibospiderPipeline(object):
         d.addErrback(self._handle_error,item,spider) 
         d.addBoth(lambda _:item)
         return d
+    
+    def _keyword_info_insert(self,conn,item,spider):
+        '''舆情关键词检索信息插入'''
+        for i in range(len(item['keyword_uid'])):
+            conn.execute('''insert ignore into cauc_keyword_info(user_id,user_alias,keyword,publish_time,content,content_md5,is_delete) values(%s,%s,%s,%s,%s,md5(%s),%s)''',(item['keyword_uid'][i],item['keyword_alias'][i],str(item['keyword']),item['keyword_publish_time'][i],item['keyword_content'][i],item['keyword_content'][i],0)) #设置符合主键实现insert ignore的不重复插入
+
 
     def _userfollow_insert(self,conn,item,spider): 
         for i in range(len(item['followuidlist'])):
             conn.execute("insert ignore t_user_follow(userID,followID,infostate,contentstate) values(%s,%s,%s,%s)",(str(WeibospiderPipeline.start_uid),item['followuidlist'][i],0,0))
 
     def _keyweibocontent_insert(self,conn,item,spider):
-        #插入发表微博内容和时间
+        '''插入发表微博内容和时间'''
         for i in range(len(item['content'])):
             if("'" in item['content'][i]):
                 content_tmp = item['content'][i].replace("'","\'")
