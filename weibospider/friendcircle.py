@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-      
 import sys
+from pyquery import PyQuery as pq
 import re
 from urllib import urlencode,quote 
-from analyzer import Analyzer
-from pyquery import PyQuery as pq
 import urllib2
+from analyzer import Analyzer
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -16,8 +16,7 @@ class FriendCircle:
         result_list = []
         p=re.compile('@(.*?) ',re.S)
         for atuser_info in atuser_info_list:
-#            result_list.append({}.fromkeys(p.findall(str(atuser_info)+" "),""))
-            result_list.append(p.findall(str(atuser_info)+" "))
+            result_list.append(p.findall(str(atuser_info) + " ")) #注意此处空格与上面正则表达式中的空格对应
         return result_list
 
 

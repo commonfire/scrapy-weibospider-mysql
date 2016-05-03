@@ -5,6 +5,7 @@ import logging
 from  settings import PROXIES 
 from scrapy.utils.project import get_project_settings
 from mayi_proxy import get_proxy_authHeader
+from checkip import check_proxy
 
 class RotateUserAgent():
     '''动态随机设置User_Agent'''
@@ -19,14 +20,18 @@ class RotateUserAgent():
         request.headers.setdefault('USER_AGENTS',random.choice(self.user_agents))
 
 class RotateHttpProxy():
-    '''动态随机设置代理IP（万人骑）'''
+    '''动态随机设置代理IP（阿里云-北京地区IP）'''
     def process_request(self,request,spider):
         proxy = random.choice(PROXIES)
-        request.meta['proxy'] = 'http://%s' % proxy['ip_port']
-        if proxy['user_pass'] is not None:
-            # setup basic authentication for the proxy
-            encoded_user_pass = base64.encodestring(proxy['user_pass'])
-            request.headers['Proxy-Authorization'] = 'Basic' + encoded_user_pass
+        if check_proxy('http',proxy['ip_port']):
+            request.meta['proxy'] = 'http://%s' % proxy['ip_port']
+            request.meta['work'] = True
+            if proxy['user_pass'] is not None:
+                # setup basic authentication for the proxy
+                encoded_user_pass = base64.encodestring(proxy['user_pass'])
+                request.headers['Proxy-Authorization'] = 'Basic' + encoded_user_pass
+        else:
+            request.meta['work'] = False
    
     def process_exception(self,request,exception,spider):
         proxy = request.meta['proxy']

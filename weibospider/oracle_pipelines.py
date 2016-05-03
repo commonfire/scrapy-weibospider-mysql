@@ -177,6 +177,7 @@ class WeibospiderPipeline(object):
                         conn.execute('''insert into t_user_weibocontent(userID,content,publishTime,repostuser,id,publishTimeStamp) values(:1,:2,to_date(:3,'YYYY-MM-DD HH24:MI'),:4,(select nvl(MAX(id),0)+1 as "id" from t_user_weibocontent),:5)''',[str(item['uid']),item['content'][i],item['time'][i],item['repost_user'][i],item['timestamp'][i]])
                     else:
                         conn.execute('''insert into t_user_weibocontent(userID,content,publishTime,repostuser,id,publishTimeStamp) values(:1,:2,to_date(:3,'YYYY-MM-DD HH24:MI'),:4,(select nvl(MAX(id),0)+1 as "id" from t_user_weibocontent),:5)''',[str(item['uid']),item['content'][i],item['time'][i],item['repost_user'][i],item['timestamp'][i]])
+
                     if type == 'atuser':
                         if item['atuser_nickname_list'][i] != {}:  #插入@用户昵称等信息
                             for atuser in item['atuser_nickname_list'][i]:

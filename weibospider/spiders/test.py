@@ -41,7 +41,7 @@ class WeiboSpider(CrawlSpider):
         #dispatcher.connect(self.spider_closed,signals.spider_closed)
 
     def spider_closed(self,spider,reason):
-        print "spider closed...."
+        logger.info("spider closed....")
         #SpiderClass = type(spider)
         #self.crawlerProcess.crawl(SpiderClass())
         
@@ -53,35 +53,40 @@ class WeiboSpider(CrawlSpider):
         return [Request(url=url,method='get',meta={'cookiejar':CookieJar()},callback=self.post_requests)]
 
     def post_requests(self,response):
-        serverdata = re.findall('{"retcode":0,"servertime":(.*?),"pcid":.*?,"nonce":"(.*?)","pubkey":"(.*?)","rsakv":"(.*?)","is_openlock":.*,"exectime":.*}',response.body,re.I)[0]  #获取get请求的数据，用于post请求登录
+        logger.info("the current proxy ip_port is: %s worked",response.request.meta['proxy'] if response.request.meta['work'] else "localhost")
+        try:
+            serverdata = re.findall('{"retcode":0,"servertime":(.*?),"pcid":.*?,"nonce":"(.*?)","pubkey":"(.*?)","rsakv":"(.*?)","is_openlock":.*,"exectime":.*}',response.body,re.I)[0]  #获取get请求的数据，用于post请求登录
 
-        servertime = serverdata[0]
-        nonce = serverdata[1]
-        pubkey = serverdata[2]
-        rsakv = serverdata[3]
-        username= WeiboSpider.start_username
-        password = WeiboSpider.start_password
-        formdata = {
-            'entry': 'weibo',  
-            'gateway': '1',  
-            'from': '',  
-            'ssosimplelogin': '1',  
-            'vsnf': '1',  
-            'vsnval': '',  
-            'su': getinfo.get_user(username),  
-            'service': 'miniblog',  
-            'servertime': servertime,  
-            'nonce': nonce,  
-            'pwencode': 'rsa2',  
-            'sp': getinfo.get_pwd(password,servertime,nonce,pubkey),  
-            'encoding': 'UTF-8',  
-            'prelt': '115',  
-            'rsakv': rsakv, 
-            'url':'http://weibo.com/ajaxlogin.php?framelogin=1&callback=parent.sinaSSOController.feedBackUrlCallBack', 
-            'returntype': 'META'
-            }
-        headers={'User-Agent':'Mozilla/5.0 (X11; Linux i686; rv:8.0) Gecko/20100101 Firefox/8.0 Chrome/20.0.1132.57 Safari/536.11'} 
-        return FormRequest(url='http://login.sina.com.cn/sso/login.php?client=ssologin.js(v1.4.4)',formdata=formdata,headers=headers,meta={'cookiejar':response.meta['cookiejar']},callback=self.get_cookie)
+            servertime = serverdata[0]
+            nonce = serverdata[1]
+            pubkey = serverdata[2]
+            rsakv = serverdata[3]
+            username= WeiboSpider.start_username
+            password = WeiboSpider.start_password
+            formdata = {
+                'entry': 'weibo',  
+                'gateway': '1',  
+                'from': '',  
+                'ssosimplelogin': '1',  
+                'vsnf': '1',  
+                'vsnval': '',  
+                'su': getinfo.get_user(username),  
+                'service': 'miniblog',  
+                'servertime': servertime,  
+                'nonce': nonce,  
+                'pwencode': 'rsa2',  
+                'sp': getinfo.get_pwd(password,servertime,nonce,pubkey),  
+                'encoding': 'UTF-8',  
+                'prelt': '115',  
+                'rsakv': rsakv, 
+                'url':'http://weibo.com/ajaxlogin.php?framelogin=1&callback=parent.sinaSSOController.feedBackUrlCallBack', 
+                'returntype': 'META'
+                }
+            headers={'User-Agent':'Mozilla/5.0 (X11; Linux i686; rv:8.0) Gecko/20100101 Firefox/8.0 Chrome/20.0.1132.57 Safari/536.11'} 
+            return FormRequest(url='http://login.sina.com.cn/sso/login.php?client=ssologin.js(v1.4.4)',formdata=formdata,headers=headers,meta={'cookiejar':response.meta['cookiejar']},callback=self.get_cookie)
+        except:
+            #logger.info("the current proxy ip_port is: %s not worked",response.request.meta['proxy'])
+            print "wrong"
 
      
     def get_cookie(self, response):

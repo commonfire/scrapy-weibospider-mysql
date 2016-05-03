@@ -19,7 +19,6 @@ from settings import USER_NAME
 from analyzer import Analyzer
 from analyzers.format_time import *
 from analyzers.keyword_info_analyzer import keyword_info_analyzer   
-from analyzers.util import get_times_fromdb
 from datamysql import MysqlStore
 from dataoracle import OracleStore
 from getpageload import GetWeibopage
@@ -99,16 +98,19 @@ class WeiboSpider(CrawlSpider):
             print "!!!!",cookie
     
     def search_from_keywordDB(self,response):
-        db = MysqlStore();conn = db.get_connection()
-        main_url = "http://s.weibo.com/weibo/"
+        db = MysqlStore();        main_url = "http://s.weibo.com/weibo/"
         getsearchpage = GetSearchpage()
      
-        sql1 = "select keyword from cauc_keyword_test_copy where is_search = 0"
-        cursor = db.select_operation(conn,sql1)
         for round in range(1):  #遍历数据库的轮数
+            conn = db.get_connection()
+
+            #对is_search位为0的关键词进行爬取
+            sql1 = "select keyword from cauc_keyword_test_copy where is_search = 0"
+            cursor = db.select_operation(conn,sql1)
             for keyword in cursor.fetchall():
                 keyword = keyword[0]
                 logger.info("this is the unsearched keyword:%s",keyword)
+                #更新is_search标志位为1
                 sql2 = "update cauc_keyword_test_copy set is_search = 1 where keyword = '%s'" % keyword
                 db.update_operation(conn,sql2)
                 search_url = main_url + getsearchpage.get_searchurl(keyword)
@@ -116,8 +118,9 @@ class WeiboSpider(CrawlSpider):
 
             logger.info("current timestamp:%d",int(time.time()))
             #设置循环爬取间隔
-            time.sleep(WeiboSpider.settings['KEYWORD_INTERVAL']) 
+            time.sleep(WeiboSpider.settings['KEYWORD_INTERVAL']) #可以采用间隔15min 
 
+            #对is_search位为1的关键词进行爬取
             sql3 = "select keyword from cauc_keyword_test_copy where is_search = 1"
             cursor = db.select_operation(conn,sql3)
             for keyword in cursor.fetchall():
@@ -129,7 +132,7 @@ class WeiboSpider(CrawlSpider):
                 
                 search_url = main_url + getsearchpage.get_searchurl_time(keyword,start_time,end_time)
                 yield Request(url=search_url,meta={'cookiejar':response.meta['cookiejar'],'search_url':search_url,'keyword':keyword},callback=self.parse_total_page)
-        conn.close()
+            conn.close()
 
     def parse_total_page(self,response):
         '''获取需要爬取的搜索结果总页数'''
@@ -137,7 +140,8 @@ class WeiboSpider(CrawlSpider):
         total_pq = analyzer.get_html(response.body,'script:contains("W_pages")')
         keyword_analyzer = keyword_info_analyzer()
         total_pages = keyword_analyzer.get_totalpages(total_pq)  #需要爬取的搜索结果总页数
-        for page in range(1):  #此处更改为total_pages
+        logger.info("the total_pages is: %d",total_pages)
+        for page in range(1):  #TODO 此处更改为total_pages
             search_url = response.meta['search_url'] + str(page + 1)  #此处添加for循环total_pages
             yield Request(url=search_url,meta={'cookiejar':response.meta['cookiejar'],'keyword':response.meta['keyword']},callback=self.parse_keyword_info)
 

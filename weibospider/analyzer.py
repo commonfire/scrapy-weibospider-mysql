@@ -17,7 +17,7 @@ class Analyzer:
         self.follower_list = []     #某用户粉丝列表
         self.follow_list = []       #某用户关注列表
         self.childfollow_list = []  #某子用户关注列表
-        self.userinfo_dict = {}.fromkeys(('昵称：'.decode('utf-8'),'所在地：'.decode('utf-8'),'性别：'.decode('utf-8'),'博客：'.decode('utf-8'),'个性域名：'.decode('utf-8'),'简介：'.decode('utf-8'),'生日：'.decode('utf-8'),'注册时间：'.decode('utf-8')),'')  #获取非公众账号基本信息
+        self.userinfo_dict = {}.fromkeys(('昵称：'.decode('utf-8'),'所在地：'.decode('utf-8'),'性别：'.decode('utf-8'),'博客：'.decode('utf-8'),'个性域名：'.decode('utf-8'),'简介：'.decode('utf-8'),'生日：'.decode('utf-8'),'注册时间：'.decode('utf-8'),'follow_num','follower_num'),'')  #获取非公众账号基本信息
         self.public_userinfo_dict = {}.fromkeys(('联系人：'.decode('utf-8'),'电话：'.decode('utf-8'),'邮箱：'.decode('utf-8'),'友情链接：'.decode('utf-8')),'')  #获取公众账号基本信息
         self.keyuser_id = []          #与某关键词相关的用户uid
         self.keyuser_alias = []       #与某关键词相关的用户昵称
@@ -30,7 +30,7 @@ class Analyzer:
         '''获取个人主页中html内容'''
         total_pq = pq(unicode(total))  
 	    #获取指定<script>
-        total1 = total_pq('script:contains("WB_feed WB_feed_profile")').html()   
+        total1 = total_pq('script:contains("WB_feed WB_feed_v3")').html()   
 	    #利用正则匹配出大括号内的内容（json串）
         p=re.compile('{.*}',re.S)
         match = p.search(unicode(total1)) 
@@ -41,7 +41,8 @@ class Analyzer:
             total_pq = pq(unicode(data3))
             return total_pq
         else:
-            print "get_main_html wrong!"
+            logger.warning("get_main_html wrong!")
+            return None
 
     def get_content(self,total_pq):
         '''获取用户发表微博内容'''
@@ -240,8 +241,7 @@ class Analyzer:
             total_pq = pq(unicode(data3))
             return total_pq
         else:
-            #print "get_html wrong!"                                            
-            logger.warning("parse html wrong!!")
+            logger.warning("no matched html with condition!!")
             return None
    
     
@@ -257,13 +257,19 @@ class Analyzer:
         return href
         
 
-    def get_userinfo(self,total_pq):
+    def get_userinfo(self,total_pq1,total_pq2):
         '''解析微博非公众用户个人详细信息'''
-        user_li = total_pq("div.WB_innerwrap").eq(0).children(".m_wrap").children("ul").find('li')
+        #根据total_pq1获取用户基本信息
+        user_li = total_pq1("div.WB_innerwrap").eq(0).children(".m_wrap").children("ul").find('li')
         for li in user_li:
             li = pq(li)
             #self.userinfo_dict[li.find('span').eq(0).text()] = li.find('span').eq(1).text()
             self.userinfo_dict[li.find('span').eq(0).text()] = re.sub('\n','',li.find('span').eq(1).text())    
+
+        #根据total_pq2获取用户的关注数和粉丝数
+        counter_list = total_pq2.find('td')
+        self.userinfo_dict['follow_num'] = counter_list.eq(0)('strong').text()
+        self.userinfo_dict['follower_num'] = counter_list.eq(1)('strong').text()
         return self.userinfo_dict
 
     def get_public_userinfo(self,total_pq):

@@ -127,7 +127,6 @@ class WeiboSpider(CrawlSpider):
 
 
     def parse_load(self,response):
-        user_info = userinfo.WeiboSpider()
         request_url = response.request.url
         p=re.compile('&pre_page=(\d).*&page=(\d)')  #用于判断是第一页的第一次加载
         match = p.search(request_url)
@@ -161,7 +160,7 @@ class WeiboSpider(CrawlSpider):
       
         for atuser_inlist in atuser_list:
             if atuser_inlist != []: #某微博没有@用户
-                for atuser in atuser_inlist:
+                for atuser in atuser_inlist:  
                     uid_url = "http://s.weibo.com/user/"+quote(quote(str(atuser)))+"&Refer=weibo_user"
                     yield Request(url=uid_url,meta={'cookiejar':response.meta['cookiejar'],'uid':self.uid,'atuser_nickname':atuser},callback=self.parse_atuser_uid)
             else:

@@ -19,14 +19,15 @@ class keyword_info_analyzer:
 
     def get_totalpages(self,total_pq):
         '''获取关键词搜索结果总页数'''
-        if total_pq is None:
+        if total_pq is None:  #此时没有页数列表，即只有一页
             return 1
         data = total_pq("div.W_pages").find('li')
-        total_page = len(data)
-        if total_page == 0:   #此时没有页数列表，即只有一页
-            return 1
-        else:
-            return total_page
+        return len(data)
+#        total_page = len(data)
+#        if total_page == 0:   #此时没有页数列表，即只有一页
+#            return 1
+#        else:
+#            return total_page
 
     def get_keyword_info(self,total_pq):
         '''获取舆情关键词相关信息'''
@@ -62,7 +63,8 @@ class keyword_info_analyzer:
                 time = dku2.find('a').eq(0).attr("title")
                 self.keyword_publish_time.append(time)
         else:
-            print "没有搜索结果"
+            #此时返回的各个字段值为空的
+            logger.info("没有关键词搜索结果")
 
         return self.keyword_uid,self.keyword_alias,self.keyword_content,self.keyword_publish_time
 

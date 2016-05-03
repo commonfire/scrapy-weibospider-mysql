@@ -14,7 +14,7 @@ BOT_NAME = 'weibospider'
 SPIDER_MODULES = ['weibospider.spiders']
 NEWSPIDER_MODULE = 'weibospider.spiders'
 ITEM_PIPELINES={#'weibospider.pipelines.WeibospiderPipeline':300}
-                #'weibospider.user_imagepipelines.UserImagesPipeline':400, 
+                'weibospider.user_imagepipelines.UserImagesPipeline':400, 
                 'weibospider.pipelines.WeibospiderPipeline':300
                }
 #Mysql数据库配置
@@ -46,6 +46,8 @@ SEARCH_PAGE_NUM = 1  #爬取基于关键词搜索的页面数
 
 #微博循环爬取时间间隔配置
 KEYWORD_INTERVAL = 60  #舆情关键词循环爬取间隔，单位：秒
+FRIENDCIRCAL_INTERVAL = 30  #重点人员朋友圈循环爬取间隔，单位：秒
+
 
 #图片下载配置0
 #IMAGES_STORE = '/home/hadoop_user/scrapy-weibospider/weibospider/userphoto'  #图片存储位置
@@ -77,9 +79,9 @@ USER_AGENTS = [
 ]
 
 PROXIES = [
-   # {'ip_port': '123.56.99.49:3128', 'user_pass': None},
-   # {'ip_port': '182.92.196.58:3128', 'user_pass': None},
-    {'ip_port': '124.200.37.38:9000', 'user_pass': None},
+    {'ip_port': '101.200.143.57:808', 'user_pass': None},
+    {'ip_port': '101.200.215.7:808', 'user_pass': None},
+    {'ip_port': '101.200.147.205:808', 'user_pass': None},
 ] 
 
 
@@ -119,9 +121,9 @@ DOWNLOAD_DELAY = 10
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
     'weibospider.middlewares.RotateUserAgent': 1,  #动态随机设置UserAgent
-    'weibospider.middlewares.RotateHttpProxy': None,  #100, #动态代理IP设置
+    'weibospider.middlewares.RotateHttpProxy': None,#100, #动态代理IP设置
     'weibospider.middlewares.MayiHttpProxy': None, #100, #蚂蚁动态代理IP设置
-    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': None
+    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': None #110
 }
 
 # Enable or disable extensions

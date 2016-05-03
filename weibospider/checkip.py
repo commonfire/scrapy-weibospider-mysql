@@ -1,34 +1,37 @@
 #-*-coding: utf-8 -*-
 import urllib2,socket,time
 
-check_url='http://www.sohu.com'
+check_url='http://www.dianping.com/search/category/2/10/g311'
 
-def check_proxy(protocol,ip_port):
+def check_proxy_helper(protocol,ip_port):
     try:
         proxy_support = urllib2.ProxyHandler({protocol:ip_port})
         opener = urllib2.build_opener(proxy_support)
         urllib2.install_opener(opener)
-        req = urllib2.Request(check_url)
-        time_start = time.time()
+        header = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.48'}
+        req = urllib2.Request(check_url,headers=header)
         src = urllib2.urlopen(req)
-        time_end = time.time()
-        return src.read()
+        proxy_detected = True
     except urllib2.HTTPError,e:
         print 'Error code:',e.code
         return False
     except Exception,detail:
         print 'Error:',detail
         return False
+    return proxy_detected
         
-def main():
-    socket.setdefaulttimeout(30)
-    protocol = 'http'
-    ip_port = '182.99.196.146:80'
-    result = check_proxy(protocol,ip_port)
+def check_proxy(protocol,ip_port):
+    socket.setdefaulttimeout(5)
+    result = check_proxy_helper(protocol,ip_port)
     if result:
-        print 'Work!!'
+        return True
     else:
-        print 'Failed!!'
+        return False
 
 if __name__ == '__main__':
-    main()
+    protocol = 'http'
+    ip_port = '101.200.143.57:808'
+    if check_proxy(protocol,ip_port):
+        print "work"
+    else:
+        print "wrong"

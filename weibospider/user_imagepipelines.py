@@ -1,8 +1,11 @@
 #-*- coding: utf-8 -*-
-import scrapy
-from scrapy.pipelines.images import ImagesPipeline
-from scrapy.exceptions import DropItem
+import logging
 import re
+import scrapy
+from scrapy.exceptions import DropItem
+from scrapy.pipelines.images import ImagesPipeline
+
+logger = logging.getLogger(__name__)
 
 class UserImagesPipeline(ImagesPipeline):
    
@@ -17,7 +20,8 @@ class UserImagesPipeline(ImagesPipeline):
             if(match2):
                 return 'full/%s.jpg' % match2.group(1)
             else:
-                print "get image_name wrong!!"
+                logger.warning("no matched full head_image_name!!")
+                return 'wrong path'
 
     def thumb_path(self,request,thumb_id,response=None,info=None):
         p1 = re.compile('.cn/(\d*?)/')
@@ -30,8 +34,8 @@ class UserImagesPipeline(ImagesPipeline):
             if(match2):
                 return 'thumbs/%s/%s_thumbnail.jpg' % (thumb_id,match2.group(1))
             else:
-                print "get image_name wrong!!"
-
+                logger.warning("no matched thumb_head_image_name!!")
+                return 'wrong path'
 
     def get_media_requests(self,item,info):
         if 'image_urls' in item and item['image_urls']: #item中有image_urls字段且其不为None
