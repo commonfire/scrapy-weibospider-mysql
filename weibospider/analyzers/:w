@@ -1,0 +1,19 @@
+# -*- coding: utf-8 -*-
+import logging
+import sys
+import json
+from pyquery import PyQuery as pq
+import re
+import urllib
+
+reload(sys)
+sys.setdefaultencoding("utf-8")
+
+logger = logging.getLogger(__name__)
+
+class weibocontent_analyzer:
+    '''预警人员微博内容解析''' 
+
+
+if __name__ == "__main__":
+    test = weibocontent_analyzer()

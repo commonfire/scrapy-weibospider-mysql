@@ -13,6 +13,9 @@ class WeibospiderItem(Item):
     content = Field()              #微博发表内容
     time = Field()                 #微博发表时间
     timestamp = Field()            #微博发表时间戳
+    repost_nums = Field()          #微博转发数
+    comment_nums = Field()         #微博评论数
+    like_nums = Field()            #微博点赞数
     
     atuser_nickname_list = Field() #微博@用户（昵称列表）
     atuser_uid = Field()           #微博@用户（uid） 
