@@ -241,7 +241,7 @@ class Analyzer:
             total_pq = pq(unicode(data3))
             return total_pq
         else:
-            logger.warning("no matched html with condition!!")
+            logger.warning("no matched html with condition: %s!!",condition)
             return None
    
     

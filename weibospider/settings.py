@@ -47,6 +47,7 @@ SEARCH_PAGE_NUM = 1  #爬取基于关键词搜索的页面数
 #微博循环爬取时间间隔配置
 KEYWORD_INTERVAL = 60  #舆情关键词循环爬取间隔，单位：秒
 FRIENDCIRCAL_INTERVAL = 30  #重点人员朋友圈循环爬取间隔，单位：秒
+WEIBOCONTENT_INTERVAL = 30  #预警人员微博内容循环爬取间隔，单位：秒
 
 
 #图片下载配置0

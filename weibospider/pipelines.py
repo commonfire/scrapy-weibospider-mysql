@@ -85,10 +85,10 @@ class WeibospiderPipeline(object):
         else:  #插入朋友圈用户个人信息
             conn.execute('''insert ignore into cauc_microblog_atuser(user_id,user_alias,location,sex,blog,domain,brief,birthday,register_time,head_image,small_head_image,follow_num,follower_num) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',(str(item['uid']),item['friend_userinfo']['昵称：'.decode('utf-8')],item['friend_userinfo']['所在地：'.decode('utf-8')],item['friend_userinfo']['性别：'.decode('utf-8')],item['friend_userinfo']['博客：'.decode('utf-8')],item['friend_userinfo'.decode('utf-8')]['个性域名：'.decode('utf-8')],item['friend_userinfo']['简介：'.decode('utf-8')],item['friend_userinfo']['生日：'.decode('utf-8')],item['friend_userinfo']['注册时间：'.decode('utf-8')],imageurl,thumbnail_url,item['friend_userinfo']['follow_num'],item['friend_userinfo']['follower_num'])) #user_alias为主键
 
-    def _weibocontent_insert(self,conn,item):
+    def _weibocontent_insert(self,conn,item,spider):
         '''微博内容信息的插入'''
         for i in range(len(item['content'])):
-            conn.execute('''insert ignore into cauc_microblog_content(user_id,content,publish_time,like_num,comment_num,repost_num) values(%s,%s,%s,%s,%s,%s)''',(str(item['uid']),item['content'][i],item['time'][i],item['repost_nums'][i],item['comment_nums'][i],item['like_nums'][i]))
+            conn.execute('''insert ignore into cauc_microblog_content(user_id,content,publish_time,publish_timestamp,repost_num,comment_num,like_num) values(%s,%s,%s,%s,%s,%s,%s)''',(str(item['uid']),item['content'][i],item['time'][i],item['timestamp'][i],item['repost_nums'][i],item['comment_nums'][i],item['like_nums'][i]))
 
     def _handle_error(self,failure,item,spider):
         logging.error(failure)  

@@ -123,7 +123,7 @@ class WeiboSpider(CrawlSpider):
                 
                 #获取需要爬取的总页面数
                 start_time = self.start_time;end_time = get_current_time('hour') 
-                mainpage_url = "http://weibo.com/" + str(user_id) + "?is_ori=1&is_forward=1&is_text=1&key_word=&start_time=" + start_time + "&end_time=" + end_time + "&is_search=1&is_searchadv1" 
+                mainpage_url = "http://weibo.com/" + str(user_id) + "?is_ori=1&is_forward=1&is_text=1&is_pic=1&key_word=&start_time=" + start_time + "&end_time=" + end_time + "&is_search=1&is_searchadv=1&" 
                 GetWeibopage.data['uid'] = user_id; 
                 thirdload_url = mainpage_url + getweibopage.get_thirdloadurl()
                 yield  Request(url=thirdload_url,meta={'cookiejar':response.meta['cookiejar'],'mainpage_url':mainpage_url,'uid':user_id,'is_search':0},callback=self.parse_total_page)
@@ -142,7 +142,7 @@ class WeiboSpider(CrawlSpider):
                 logger.info("this is the searched user_id:%s",user_id)
 
                 start_time = get_time_by_interval(int(time.time()),86400,'hour');end_time = get_current_time('hour') #起始和结束间隔时间为1天(86400s)
-                mainpage_url = "http://weibo.com/" + str(user_id) + "?is_ori=1&is_forward=1&is_text=1&key_word=&start_time=" + start_time + "&end_time=" + end_time + "&is_search=1&is_searchadv1" 
+                mainpage_url = "http://weibo.com/" + str(user_id) + "?is_ori=1&is_forward=1&is_text=1&is_pic=1&key_word=&start_time=" + start_time + "&end_time=" + end_time + "&is_search=1&is_searchadv=1&" 
                 GetWeibopage.data['uid'] = user_id; 
                 thirdload_url = mainpage_url + getweibopage.get_thirdloadurl()
                 #yield  Request(url=thirdload_url,meta={'cookiejar':response.meta['cookiejar'],'mainpage_url':mainpage_url,'uid':user_id,'is_search':1},callback=self.parse_total_page)
@@ -167,10 +167,10 @@ class WeiboSpider(CrawlSpider):
             yield  Request(url=firstload_url,meta={'cookiejar':response.meta['cookiejar'],'uid':user_id,'is_search':is_search},callback=self.parse_load)
 
             secondload_url = mainpage_url + getweibopage.get_secondloadurl()
-            #yield  Request(url=secondload_url,meta={'cookiejar':response.meta['cookiejar'],'uid':user_id,'is_search':is_search},callback=self.parse_load)
+            yield  Request(url=secondload_url,meta={'cookiejar':response.meta['cookiejar'],'uid':user_id,'is_search':is_search},callback=self.parse_load)
 
             thirdload_url = mainpage_url + getweibopage.get_thirdloadurl()
-            #yield  Request(url=thirdload_url,meta={'cookiejar':response.meta['cookiejar'],'uid':user_id,'is_search':is_search},callback=self.parse_load)
+            yield  Request(url=thirdload_url,meta={'cookiejar':response.meta['cookiejar'],'uid':user_id,'is_search':is_search},callback=self.parse_load)
 
     def parse_load(self,response):
         item = WeibospiderItem()  #获取用户微博内容信息
