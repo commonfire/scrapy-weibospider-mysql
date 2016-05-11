@@ -56,34 +56,39 @@ class WeibospiderPipeline(object):
         '''重点人员朋友圈信息及该重点人员个人信息插入'''
         if 'userinfo' in item:
             self._userinfo_insert(conn,item,spider,'main') #插入主用户个人基本信息
-        elif 'friend_userinfo' in item:
-            self._userinfo_insert(conn,item,spider,'friend') #插入朋友圈个人基本信息
+        elif 'atuser_userinfo' in item:
+            self._userinfo_insert(conn,item,spider,'atuser') #插入朋友圈@用户个人基本信息
+        elif 'repostuser_userinfo' in item:
+            self._userinfo_insert(conn,item,spider,'repostuser') #插入朋友圈转发用户个人基本信息
         else:    
             self._friendcirle_insert_helper(conn,item)  #插入朋友圈关系信息
 
     def _friendcirle_insert_helper(self,conn,item):
         for i in range(len(item['content'])):
-            if item['atuser_nickname_list'][i] != {}:
+            if item['atuser_nickname_list'][i] != {}:   #插入'@用户'朋友关系
                 for atuser in item['atuser_nickname_list'][i]:
                     conn.execute('''insert ignore cauc_microblog_atuser_info(user_id,atuser_alias,publish_time,publish_timestamp) values(%s,%s,%s,%s)''',(str(item['uid']),atuser,item['time'][i],item['timestamp'][i]))
+            if item['repost_user'][i] != '': #插入'转发用户'朋友关系
+                conn.execute('''insert ignore cauc_microblog_repostuser_info(user_id,repostuser_alias,publish_time,publish_timestamp) values(%s,%s,%s,%s)''',(str(item['uid']),item['repost_user'][i],item['time'][i],item['timestamp'][i]))
+
 
     def _userinfo_insert(self,conn,item,spideri,type):
         '''微博主用户个人信息插入'''
         if item['image_urls']:  #item['image_urls']不为None
-            if 'png' not in item['image_urls']:
-                imageurl = "images/userphoto/full/"+str(item['uid'])+".jpg"
-                thumbnail_url = "images/userphoto/thumbs/small/"+str(item['uid'])+"_thumbnail.jpg" 
-            else:
-                tmp = item['image_urls']
-                imageurl = "images/userphoto/full/"+tmp[tmp.rindex('/')+1:tmp.rindex('.')]+".jpg"
-                thumbnail_url = "images/userphoto/thumbs/small/"+tmp[tmp.rindex('/')+1:tmp.rindex('.')]+"_thumbnail.jpg"
+            imageurl = "images/userphoto/full/"+str(item['uid'])+".jpg"
+            thumbnail_url = "images/userphoto/thumbs/small/"+str(item['uid'])+"_thumbnail.jpg" 
         else:
             imageurl = '';thumbnail_url = ''
 
         if type == 'main': #插入主用户个人基本信息
-            conn.execute('''insert into cauc_microblog_user(user_id,user_alias,location,sex,blog,domain,brief,birthday,register_time,head_image,small_head_image,follow_num,follower_num) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',(str(item['uid']),item['userinfo']['昵称：'.decode('utf-8')],item['userinfo']['所在地：'.decode('utf-8')],item['userinfo']['性别：'.decode('utf-8')],item['userinfo']['博客：'.decode('utf-8')],item['userinfo'.decode('utf-8')]['个性域名：'.decode('utf-8')],item['userinfo']['简介：'.decode('utf-8')],item['userinfo']['生日：'.decode('utf-8')],item['userinfo']['注册时间：'.decode('utf-8')],imageurl,thumbnail_url,item['userinfo']['follow_num'],item['userinfo']['follower_num']))
-        else:  #插入朋友圈用户个人信息
-            conn.execute('''insert ignore into cauc_microblog_atuser(user_id,user_alias,location,sex,blog,domain,brief,birthday,register_time,head_image,small_head_image,follow_num,follower_num) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',(str(item['uid']),item['friend_userinfo']['昵称：'.decode('utf-8')],item['friend_userinfo']['所在地：'.decode('utf-8')],item['friend_userinfo']['性别：'.decode('utf-8')],item['friend_userinfo']['博客：'.decode('utf-8')],item['friend_userinfo'.decode('utf-8')]['个性域名：'.decode('utf-8')],item['friend_userinfo']['简介：'.decode('utf-8')],item['friend_userinfo']['生日：'.decode('utf-8')],item['friend_userinfo']['注册时间：'.decode('utf-8')],imageurl,thumbnail_url,item['friend_userinfo']['follow_num'],item['friend_userinfo']['follower_num'])) #user_alias为主键
+            conn.execute('''insert ignore into cauc_microblog_user(user_id,user_alias,location,sex,blog,domain,brief,birthday,register_time,head_image,small_head_image,follow_num,follower_num) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',(str(item['uid']),item['userinfo']['昵称：'.decode('utf-8')],item['userinfo']['所在地：'.decode('utf-8')],item['userinfo']['性别：'.decode('utf-8')],item['userinfo']['博客：'.decode('utf-8')],item['userinfo'.decode('utf-8')]['个性域名：'.decode('utf-8')],item['userinfo']['简介：'.decode('utf-8')],item['userinfo']['生日：'.decode('utf-8')],item['userinfo']['注册时间：'.decode('utf-8')],imageurl,thumbnail_url,item['userinfo']['follow_num'],item['userinfo']['follower_num']))
+
+        elif type == 'atuser':  #插入朋友圈@用户个人信息
+            conn.execute('''insert ignore into cauc_microblog_atuser(atuser_id,atuser_alias,location,sex,blog,domain,brief,birthday,register_time,head_image,small_head_image,follow_num,follower_num) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',(str(item['uid']),item['atuser_userinfo']['昵称：'.decode('utf-8')],item['atuser_userinfo']['所在地：'.decode('utf-8')],item['atuser_userinfo']['性别：'.decode('utf-8')],item['atuser_userinfo']['博客：'.decode('utf-8')],item['atuser_userinfo'.decode('utf-8')]['个性域名：'.decode('utf-8')],item['atuser_userinfo']['简介：'.decode('utf-8')],item['atuser_userinfo']['生日：'.decode('utf-8')],item['atuser_userinfo']['注册时间：'.decode('utf-8')],imageurl,thumbnail_url,item['atuser_userinfo']['follow_num'],item['atuser_userinfo']['follower_num'])) #user_alias为主键
+        
+        else: #插入朋友圈转发用户个人信息
+            conn.execute('''insert ignore into cauc_microblog_repostuser(repostuser_id,repostuser_alias,location,sex,blog,domain,brief,birthday,register_time,head_image,small_head_image,follow_num,follower_num) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',(str(item['uid']),item['repostuser_userinfo']['昵称：'.decode('utf-8')],item['repostuser_userinfo']['所在地：'.decode('utf-8')],item['repostuser_userinfo']['性别：'.decode('utf-8')],item['repostuser_userinfo']['博客：'.decode('utf-8')],item['repostuser_userinfo'.decode('utf-8')]['个性域名：'.decode('utf-8')],item['repostuser_userinfo']['简介：'.decode('utf-8')],item['repostuser_userinfo']['生日：'.decode('utf-8')],item['repostuser_userinfo']['注册时间：'.decode('utf-8')],imageurl,thumbnail_url,item['repostuser_userinfo']['follow_num'],item['repostuser_userinfo']['follower_num'])) #user_alias为主键
+
 
     def _weibocontent_insert(self,conn,item,spider):
         '''微博内容信息的插入'''

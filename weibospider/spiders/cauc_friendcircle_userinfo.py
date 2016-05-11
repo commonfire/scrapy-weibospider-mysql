@@ -2,6 +2,7 @@
 #python标准模块
 import binascii
 import logging
+import sys
 import time
 #python第三方模块
 import base64
@@ -26,6 +27,9 @@ from friendcircle import FriendCircle
 from getpageload import GetWeibopage
 from getsearchpage import GetSearchpage
 import getinfo
+
+reload(sys)
+sys.setdefaultencoding("utf-8")
 
 logger = logging.getLogger(__name__)
 
@@ -175,16 +179,16 @@ class WeiboSpider(CrawlSpider):
         request_url = response.request.url
         p=re.compile('&pre_page=(\d).*&page=(\d)')  #用于判断是第一页的第一次加载
         match = p.search(request_url)
-        if int(match.group(1)) == 0 and int(match.group(2)) == 1: #进行用户信息的获取
-            is_search = response.meta['is_search']
-            logger.info("the is_search tag in parse_load is %s",is_search)
-            if not is_search: #没有搜索过该用户
-                analyzer = Analyzer()
-                total_pq = analyzer.get_html(response.body,'script:contains("PCD_person_info")')
-                user_property = analyzer.get_userproperty(total_pq)
-                if not user_property == 'icon_verify_co_v': #该账号不为公众账号
-                    userinfo_url = analyzer.get_userinfohref(total_pq)
-                    yield Request(url=userinfo_url,meta={'cookiejar':response.meta['cookiejar'],'uid':response.meta['uid'],'is_friend':0},callback=self.parse_userinfo)
+        if match:
+            if int(match.group(1)) == 0 and int(match.group(2)) == 1: #进行当前主用户信息的获取(即非@用户和转发用户)
+                is_search = response.meta['is_search']
+                if not is_search: #没有搜索过该主用户
+                    analyzer = Analyzer()
+                    total_pq = analyzer.get_html(response.body,'script:contains("PCD_person_info")')
+                    user_property = analyzer.get_userproperty(total_pq)
+                    if not user_property == 'icon_verify_co_v': #该账号不为公众账号
+                        userinfo_url = analyzer.get_userinfohref(total_pq)
+                        yield Request(url=userinfo_url,meta={'cookiejar':response.meta['cookiejar'],'uid':response.meta['uid'],'is_friend':0},callback=self.parse_userinfo)
 
         item = WeibospiderItem()  #获取用户微博信息及@用户信息
         analyzer = Analyzer()
@@ -201,10 +205,16 @@ class WeiboSpider(CrawlSpider):
         frc_analyzer = friendcircle_analyzer()
         #获取@用户uid及基本信息
         atuser_set = self.get_atuser_set(atuser_list)
-        for atuser_alias in atuser_set:
-            friend_url = frc_analyzer.get_frienduid_url(atuser_alias)
-            yield Request(url=friend_url,meta={'cookiejar':response.meta['cookiejar'],'uid':response.meta['uid']},callback=self.parse_friend_uid)
+#        for atuser_alias in atuser_set:
+#            friend_url = frc_analyzer.get_frienduid_url(atuser_alias)
+#            yield Request(url=friend_url,meta={'cookiejar':response.meta['cookiejar'],'uid':response.meta['uid'],'is_friend':1},callback=self.parse_friend_uid) #is_friend=1代表爬取@用户基本信息 
            
+        #获取转发用户uid及基本信息
+        for repostuser_alias in item['repost_user']:
+            if repostuser_alias: #repostuser_alias不为空，即有转发用户
+                friend_url = frc_analyzer.get_frienduid_url(repostuser_alias)
+                yield Request(url=friend_url,meta={'cookiejar':response.meta['cookiejar'],'uid':response.meta['uid'],'is_friend':2},callback=self.parse_friend_uid) #is_friend=2代表爬取转发用户基本信息 
+
 
     def parse_friend_uid(self,response):
         '''根据昵称解析朋友圈用户uid'''
@@ -215,7 +225,7 @@ class WeiboSpider(CrawlSpider):
             if friend_json_info['uid'] and friend_json_info['tag'] == 0: #获取朋友圈非公众账号个人信息
                 print "the friend uid:",friend_json_info['uid']
                 userinfo_url = frc_analyzer.get_userinfo_url(friend_json_info['uid'])
-                yield Request(url=userinfo_url,meta={'cookiejar':response.meta['cookiejar'],'uid':friend_json_info['uid'],'is_friend':1},callback=self.parse_userinfo)
+                yield Request(url=userinfo_url,meta={'cookiejar':response.meta['cookiejar'],'uid':friend_json_info['uid'],'is_friend':response.meta['is_friend']},callback=self.parse_userinfo,dont_filter=True)
             else:
                 logger.warning('no right uid found for alias!')
         else:
@@ -228,7 +238,7 @@ class WeiboSpider(CrawlSpider):
         analyzer = Analyzer()
         try:
             total_pq1 = analyzer.get_html(response.body,'script:contains("pf_photo")')
-            item['image_urls'] = analyzer.get_userphoto_url(total_pq1)
+            item['image_urls'] = analyzer.get_userphoto_url(total_pq1) + "?uid=" + str(response.meta['uid'])
             #item['image_urls'] = None 
              
             total_pq2 = analyzer.get_html(response.body,'script:contains("PCD_text_b")')
@@ -236,12 +246,15 @@ class WeiboSpider(CrawlSpider):
 
             if response.meta['is_friend'] == 0: #此时用于获取主用户基本信息，而非朋友圈用户基本信息
                 item['userinfo'] = analyzer.get_userinfo(total_pq2,total_pq3)
-            else:
-                item['friend_userinfo'] = analyzer.get_userinfo(total_pq2,total_pq3)
+            elif response.meta['is_friend'] == 1: #此时用于获取@用户基本信息
+                item['atuser_userinfo'] = analyzer.get_userinfo(total_pq2,total_pq3)
+            else: #此时用于获取转发用户基本信息
+                item['repostuser_userinfo'] = analyzer.get_userinfo(total_pq2,total_pq3)
 
         except Exception,e:
             item['userinfo'] = {}.fromkeys(('昵称：'.decode('utf-8'),'所在地：'.decode('utf-8'),'性别：'.decode('utf-8'),'博客：'.decode('utf-8'),'个性域名：'.decode('utf-8'),'简介：'.decode('utf-8'),'生日：'.decode('utf-8'),'注册时间：'.decode('utf-8'),'follow_num','follower_num'),'')
-            iitem['friend_userinfo'] = item['userinfo'] 
+            item['atuser_userinfo'] = item['userinfo'] 
+            item['repostuser_userinfo'] = item['userinfo']
             item['image_urls'] = None
 
         finally:
@@ -253,3 +266,5 @@ class WeiboSpider(CrawlSpider):
         for atuser_inner_list in atuser_list:
             result.extend(atuser_inner_list)
         return set(result)
+
+

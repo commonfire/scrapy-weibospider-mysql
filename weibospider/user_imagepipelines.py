@@ -10,32 +10,22 @@ logger = logging.getLogger(__name__)
 class UserImagesPipeline(ImagesPipeline):
    
     def file_path(self,request,response=None,info=None):
-        p1 = re.compile('.cn/(\d*?)/')
+        p1 = re.compile('uid=(\d*)')
         match1 = p1.search(request.url)
         if(match1):
             return 'full/%s.jpg' % match1.group(1)
         else:
-            p2 = re.compile('face/(.*?).png')  #微博用户头像可能是新浪默认头像，url为：http://img.t.sinajs.cn/t5/style/images/face/male_180.png形式
-            match2 = p2.search(request.url)
-            if(match2):
-                return 'full/%s.jpg' % match2.group(1)
-            else:
-                logger.warning("no matched full head_image_name!!")
-                return 'wrong path'
+            logger.warning("no matched full head_image_name!!")
+            return 'wrong path'
 
     def thumb_path(self,request,thumb_id,response=None,info=None):
-        p1 = re.compile('.cn/(\d*?)/')
+        p1 = re.compile('uid=(\d*)')
         match1 = p1.search(request.url) 
         if(match1):
             return 'thumbs/%s/%s_thumbnail.jpg' % (thumb_id,match1.group(1))
         else:
-            p2 = re.compile('face/(.*?).png')  #微博用户头像可能是新浪默认头像，url为：http://img.t.sinajs.cn/t5/style/images/face/male_180.png形式
-            match2 = p2.search(request.url)
-            if(match2):
-                return 'thumbs/%s/%s_thumbnail.jpg' % (thumb_id,match2.group(1))
-            else:
-                logger.warning("no matched thumb_head_image_name!!")
-                return 'wrong path'
+            logger.warning("no matched thumb_head_image_name!!")
+            return 'wrong path'
 
     def get_media_requests(self,item,info):
         if 'image_urls' in item and item['image_urls']: #item中有image_urls字段且其不为None

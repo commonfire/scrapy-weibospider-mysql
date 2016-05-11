@@ -18,6 +18,8 @@ class RotateUserAgent():
 
     def process_request(self,request,spider):
         request.headers.setdefault('USER_AGENTS',random.choice(self.user_agents))
+        #request.headers['USER_AGENTS'] = random.choice(self.user_agents)
+
 
 class RotateHttpProxy():
     '''动态随机设置代理IP（阿里云-北京地区IP）'''

@@ -16,6 +16,8 @@ class friendcircle_analyzer:
 
     def get_frienduid_url(self,alias):
         '''根据昵称获取用于得到@用户或转发用户uid的请求url'''
+        if isinstance(alias,unicode):
+            alias = str(alias)
         encoded_alias = urllib.quote(alias)
         return 'http://weibo.com/aj/v6/user/newcard?ajwvr=6&name=%s&type=1' % encoded_alias
 
@@ -62,4 +64,4 @@ class friendcircle_analyzer:
 
 if __name__ == "__main__":
     a = friendcircle_analyzer()
-    print a.get_userinfo_url(1808084593)
+    print a.get_frienduid_url(str(u'航大东北王'))

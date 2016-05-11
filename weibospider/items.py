@@ -28,7 +28,8 @@ class WeibospiderItem(Item):
     follower_uid_list = Field()    #粉丝用户uid列表
     
     userinfo = Field()             #用户基本信息
-    friend_userinfo = Field()      #朋友圈用户个人基本信息
+    repostuser_userinfo = Field()      #朋友圈@用户个人基本信息
+    atuser_userinfo = Field()      #朋友圈@用户个人基本信息
     image_urls = Field()           #用户头像图片链接
     user_property = Field()        #用户属性，如达人，公众账号
     userAlias_public =  Field()    #公众账号昵称
