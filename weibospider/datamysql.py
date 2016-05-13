@@ -1,12 +1,15 @@
 #-*- coding:utf-8 -*-
 import logging
 import sys
-from scrapy.utils.project import get_project_settings
-import MySQLdb
 import json
+import MySQLdb
+from scrapy.utils.project import get_project_settings
+
+#logger = logging.getLogger(__name__)
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
+
 
 class MysqlStore:
     '''Mysql数据库连接与命令操作'''
@@ -17,10 +20,14 @@ class MysqlStore:
         try:
             conn = MySQLdb.connect(host=MysqlStore.settings['MYSQL_HOST'],user=MysqlStore.settings['MYSQL_USER'],passwd=MysqlStore.settings['MYSQL_PASSWD'],db=MysqlStore.settings['MYSQL_DBNAME'],port=3306)
             conn.set_character_set('utf8mb4')
+            #logger.warning('mysql_connectinon success!!')
             print 'mysql_connectinon success!!'
             return conn
         except MySQLdb.Error,e:
-            print "Mysql Error %d: %s" % (e.args[0],e.args[1])
+            logger.error("Mysql Error %d: %s",(e.args[0],e.args[1]))
+        except Exception,e:
+            logger.error(e)
+
     
     def close_connection(self,cursor,conn):
         '''关闭数据库'''
@@ -65,10 +72,9 @@ class MysqlStore:
 if __name__ == '__main__':
     db = MysqlStore();
     conn = db.get_connection();
-    sql3 = "select keyword from cauc_keyword_test where is_search = 1"
-    cursor = db.select_operation(conn,sql3) 
-    a = cursor.fetchall()
-    for i in a:
-        print i 
-    #print json.dumps(a)
+    #sql3 = "select keyword from cauc_keyword_test where is_search = 1"
+    #cursor = db.select_operation(conn,sql3) 
+    #a = cursor.fetchall()
+    #for i in a:
+    #    print i 
     conn.close()

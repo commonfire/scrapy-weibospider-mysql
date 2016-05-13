@@ -42,7 +42,7 @@ class keyword_info_analyzer:
 
                 a_tag = dku1.children('a')
                 if len(a_tag) >= 2 and (a_tag.eq(1).attr('class') is not None) and (a_tag.eq(1).attr('class') == "approve_co"):
-                    logger.info(" 该账号为企业认证账号company_approve")
+                    logger.info(" 该账号为企业认证账号company_approve!!")
                     continue
                 
                 content = dku1.children('p.comment_txt').text() #与关键词相关用户发表微博内容

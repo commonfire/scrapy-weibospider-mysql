@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #python标准模块
-import re
 import random
+import re
 import base64
 import binascii
 import logging
@@ -19,10 +19,10 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.xlib.pydispatch import dispatcher
 from scrapy import signals
 from settings import USER_NAME
-from cookielist import COOKIES
 #应用程序自定义模块
 import getinfo
 from analyzer import Analyzer
+from cookielist import COOKIES
 from dataoracle import OracleStore
 from getpageload import GetWeibopage
 from dataoracle import OracleStore
@@ -30,17 +30,8 @@ from dataoracle import OracleStore
 logger = logging.getLogger(__name__)
 
 class WeiboSpider(CrawlSpider):
-    name = 'test'
+    name = '1test'
     allowed_domains = ['weibo.com','sina.com.cn']
-    settings = get_project_settings()
-    #start_username = settings['USER_NAME']
-    start_username = USER_NAME  #登陆用户名
-    start_password = settings['PASS_WORD'] #登录用户密码
-    #start_uid = settings['UID']
-
-    #def __init__(self):
-
-        #dispatcher.connect(self.spider_closed,signals.spider_closed)
 
     def spider_closed(self,spider,reason):
         logger.info("spider closed....")
@@ -49,10 +40,26 @@ class WeiboSpider(CrawlSpider):
         
 
     def start_requests(self):
-        username = WeiboSpider.start_username
-        username = getinfo.get_user(username)
-        url = 'http://login.sina.com.cn/sso/prelogin.php?entry=sso&callback=sinaSSOController.preloginCallBack&su=%s&rsakt=mod&client=ssologin.js(v1.4.4)' % username
-        return [Request(url=url,method='get',meta={'cookiejar':CookieJar()},callback=self.post_requests)]
+        return [Request(url='http://weibo.com',method='get',cookies=random.choice(COOKIES),callback=self.logined)]
+
+    def logined(self,response):
+        if response.status == 200:
+            logger.info("response succeed!!")
+            logger.warning("the succeed response code %d!!",response.status)
+            print "status code:",response.status
+            print "$$$$$$$$$$$",response.request.cookies
+        #return [Request(url='http://weibo.com/p/100202read9305179',meta={'cookiejar':response.meta['cookiejar']},callback=self.logined1)]
+        else:
+            logger.warning("the failed response status code %d!!",response.status)
+            return [Request(url='http://weibo.com',method='get',cookies=random.choice(COOKIES),callback=self.logined)]
+
+        return [Request(url='http://weibo.com/p/100202read9305179',cookies=random.choice(COOKIES),callback=self.logined1)]
+
+    def logined1(self,response):
+        print "##########",response.request.cookies
+        with open('test_page.html','w+') as f:
+            f.write(str(response.body))
+        return 
 
     def post_requests(self,response):
         try:
