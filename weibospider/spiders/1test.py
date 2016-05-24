@@ -51,7 +51,7 @@ class WeiboSpider(CrawlSpider):
         #return [Request(url='http://weibo.com/p/100202read9305179',meta={'cookiejar':response.meta['cookiejar']},callback=self.logined1)]
         else:
             logger.warning("the failed response status code %d!!",response.status)
-            return [Request(url='http://weibo.com',method='get',cookies=random.choice(COOKIES),callback=self.logined)]
+            #return [Request(url='http://weibo.com',method='get',cookies=random.choice(COOKIES),callback=self.logined)]
 
         return [Request(url='http://weibo.com/p/100202read9305179',cookies=random.choice(COOKIES),callback=self.logined1)]
 

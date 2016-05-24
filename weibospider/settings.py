@@ -18,7 +18,7 @@ ITEM_PIPELINES={#'weibospider.pipelines.WeibospiderPipeline':300}
                 'weibospider.pipelines.WeibospiderPipeline':300
                }
 #Mysql数据库配置
-MYSQL_HOST = '10.109.243.246'
+MYSQL_HOST = '10.109.243.244'
 MYSQL_DBNAME = 'cauc_microblog'
 MYSQL_USER = 'root'
 MYSQL_PASSWD = 'root'
@@ -44,7 +44,7 @@ FOLLOWER_PAGE_NUM = 1  #爬取用户粉丝列表页面数
 SEARCH_PAGE_NUM = 1  #爬取基于关键词搜索的页面数
 
 #微博循环爬取时间间隔配置
-KEYWORD_INTERVAL = 30  #舆情关键词循环爬取间隔，单位：秒
+KEYWORD_INTERVAL = 600  #舆情关键词循环爬取间隔，单位：秒
 FRIENDCIRCAL_INTERVAL = 30  #重点人员朋友圈循环爬取间隔，单位：秒
 WEIBOCONTENT_INTERVAL = 30  #预警人员微博内容循环爬取间隔，单位：秒
 
@@ -55,6 +55,10 @@ IMAGES_STORE = '/home/hadoop_user/javaproject/weiboanalysis-1/WebContent/images/
 IMAGES_EXPIRES = 90          #图片失效期限天数
 IMAGES_THUMBS = {'small':(40,40)}  #设置图片缩略图长度和宽度
 
+#cookie失效期限设置
+EXPIRES = 10000000000
+#请求超时时间设置
+REQUEST_TIMEOUT = 5
 #日志log配置文件
 #LOG_ENABLED = False
 
@@ -79,9 +83,9 @@ USER_AGENTS = [
 ]
 
 PROXIES = [
-    {'ip_port': '101.200.143.57:808', 'user_pass': None},
-    {'ip_port': '101.200.215.7:808', 'user_pass': None},
-    {'ip_port': '101.200.147.205:808', 'user_pass': None},
+    {'ip_port': '43.241.237.4:808', 'user_pass': None},
+    #{'ip_port': '101.200.215.7:808', 'user_pass': None},
+    #{'ip_port': '101.200.147.205:808', 'user_pass': None},
 ] 
 
 
@@ -121,9 +125,9 @@ DOWNLOAD_DELAY = 10
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
     'weibospider.middlewares.RotateUserAgent': 1,  #动态随机设置UserAgent
-    'weibospider.middlewares.RotateHttpProxy': None,#100, #动态代理IP设置
+    'weibospider.middlewares.RotateHttpProxy': None, #100, #动态代理IP设置
     'weibospider.middlewares.MayiHttpProxy': None, #100, #蚂蚁动态代理IP设置
-    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': None #110
+    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': None  #110
 }
 
 # Enable or disable extensions

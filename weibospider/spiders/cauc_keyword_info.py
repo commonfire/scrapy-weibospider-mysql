@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 #python标准模块
 import random
-import re
-import base64
 import binascii
 import logging
 import time
 #python第三方模块
+import base64
+import re
 import rsa
 import scrapy
 from scrapy.linkextractors import LinkExtractor
@@ -37,7 +37,7 @@ class WeiboSpider(CrawlSpider):
 
 
     def start_requests(self):
-        return [Request(url="http://weibo.com",method='get',cookies=random.choice(COOKIES),meta={'cookiejar':1},callback=self.search_from_keywordDB)]
+        return [Request(url="http://weibo.com",method='get',callback=self.search_from_keywordDB)]
     
     def search_from_keywordDB(self,response):
         if response.status == 200:
@@ -49,26 +49,24 @@ class WeiboSpider(CrawlSpider):
             for round in range(1):  #遍历数据库的轮数
                 conn = db.get_connection()
 
+                #选取is_search位为0的关键词
+                sql1 = "select keyword from cauc_keyword_test_copy where is_search = 0 and is_delete = 0" 
+                cursor1 = db.select_operation(conn,sql1)
+
                 #对is_search位为0的关键词进行爬取
-                sql1 = "select keyword from cauc_keyword_test_copy where is_search = 0"
-                cursor = db.select_operation(conn,sql1)
-                for keyword in cursor.fetchall():
+                for keyword in cursor1.fetchall():
                     keyword = keyword[0]
                     logger.info("this is the unsearched keyword:%s",keyword)
-                    #更新is_search标志位为1
-                    sql2 = "update cauc_keyword_test_copy set is_search = 1 where keyword = '%s'" % keyword
-                    db.update_operation(conn,sql2)
                     search_url = main_url + getsearchpage.get_searchurl(keyword)
-                    yield Request(url=search_url,meta={'cookiejar':response.meta['cookiejar'],'search_url':search_url,'keyword':keyword},callback=self.parse_total_page)
+                    yield Request(url=search_url,cookies=random.choice(COOKIES),meta={'search_url':search_url,'keyword':keyword},callback=self.parse_total_page)
 
-                logger.info("current timestamp:%d",int(time.time()))
-                #设置循环爬取间隔
-                time.sleep(WeiboSpider.settings['KEYWORD_INTERVAL']) #可以采用间隔15min 
+
+                #选取is_search位为1的关键词
+                sql2 = "select keyword from cauc_keyword_test_copy where is_search = 1 and is_delete = 0" 
+                cursor2 = db.select_operation(conn,sql2)
 
                 #对is_search位为1的关键词进行爬取
-                sql3 = "select keyword from cauc_keyword_test_copy where is_search = 1"
-                cursor = db.select_operation(conn,sql3)
-                for keyword in cursor.fetchall():
+                for keyword in cursor2.fetchall():
                     keyword = keyword[0]
                     logger.info("this is the searched keyword:%s",keyword)
 
@@ -76,8 +74,12 @@ class WeiboSpider(CrawlSpider):
                     start_time = get_time_by_interval(int(time.time()),3600)  #爬取3600秒，即1小时前的内容
                     
                     search_url = main_url + getsearchpage.get_searchurl_time(keyword,start_time,end_time)
-                    yield Request(url=search_url,meta={'cookiejar':response.meta['cookiejar'],'search_url':search_url,'keyword':keyword},callback=self.parse_total_page)
-                conn.close()
+                    yield Request(url=search_url,cookies=random.choice(COOKIES),meta={'search_url':search_url,'keyword':keyword},callback=self.parse_total_page)
+
+                #更新is_search标志位为1
+                sql3 = "update cauc_keyword_test_copy set is_search = 1 where is_search = 0 and is_delete = 0"
+                db.update_operation(conn,sql3)
+                db.close_connection(conn)
         else:
             logger.warning("the failed response status code %d !!",response.status)
             #此时网络响应没有成功，重新获取cookie并请求
@@ -96,7 +98,7 @@ class WeiboSpider(CrawlSpider):
             logger.info("the total_pages is: %d",total_pages)
             for page in range(1):  #TODO 此处更改为total_pages
                 search_url = response.meta['search_url'] + str(page + 1)  #此处添加for循环total_pages
-                yield Request(url=search_url,meta={'cookiejar':response.meta['cookiejar'],'keyword':response.meta['keyword']},callback=self.parse_keyword_info)
+                yield Request(url=search_url,cookies=random.choice(COOKIES),meta={'keyword':response.meta['keyword']},callback=self.parse_keyword_info)
         else:
             logger.warning("the failed response status code %d !!",response.status)
             #此时网络响应没有成功，重新获取cookie并请求

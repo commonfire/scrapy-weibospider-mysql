@@ -63,7 +63,6 @@ class keyword_info_analyzer:
                 time = dku2.find('a').eq(0).attr("title")
                 self.keyword_publish_time.append(time)
         else:
-            #此时返回的各个字段值为空的
             logger.info("没有关键词搜索结果")
 
         return self.keyword_uid,self.keyword_alias,self.keyword_content,self.keyword_publish_time

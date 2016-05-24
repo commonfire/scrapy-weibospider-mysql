@@ -5,7 +5,7 @@ import json
 import MySQLdb
 from scrapy.utils.project import get_project_settings
 
-#logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -21,7 +21,7 @@ class MysqlStore:
             conn = MySQLdb.connect(host=MysqlStore.settings['MYSQL_HOST'],user=MysqlStore.settings['MYSQL_USER'],passwd=MysqlStore.settings['MYSQL_PASSWD'],db=MysqlStore.settings['MYSQL_DBNAME'],port=3306)
             conn.set_character_set('utf8mb4')
             #logger.warning('mysql_connectinon success!!')
-            print 'mysql_connectinon success!!'
+            logger.info('mysql_connectinon success!!')
             return conn
         except MySQLdb.Error,e:
             logger.error("Mysql Error %d: %s",(e.args[0],e.args[1]))
@@ -29,30 +29,34 @@ class MysqlStore:
             logger.error(e)
 
     
-    def close_connection(self,cursor,conn):
+    def close_connection(self,conn,cursor=None):
         '''关闭数据库'''
-        cursor.close()
-        conn.close()
-        print "mysql_connection close!!"
+        try:
+            if cursor:
+                cursor.close()
+            conn.close()
+            logger.info("mysql_connection close!!")
+        except MySQLdb.Error,e:
+            print "Mysql Error %d: %s" % (e.args[0],e.args[1])
 
     def update_operation(self,conn,sql,param=None):
         '''更新数据操作'''
         cur = self.set_utf8(conn)
         self.executor(cur,sql,param)
         conn.commit()
-        print 'update_operation success!!'
+        logger.info('update_operation success!!')
 
     def insert_operation(self,conn,sql,param=None):
         '''插入数据操作'''
         cur = self.set_utf8(conn)
         self.executor(cur,sql,param)
-        print 'insert_operation success!!'
+        logger.info('insert_operation success!!')
 
     def select_operation(self,conn,sql,param=None):
         '''从数据库中选择出数据'''
         cur = self.set_utf8(conn)
         self.executor(cur,sql,param)
-        print 'select_operation success!!'
+        logger.info('select_operation success!!')
         return cur
 
     def executor(self,cursor,sql,param):

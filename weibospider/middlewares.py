@@ -22,18 +22,20 @@ class RotateUserAgent():
 
 
 class RotateHttpProxy():
-    '''动态随机设置代理IP（阿里云-北京地区IP）'''
+    '''动态随机设置代理IP（北京/天津地区IP）'''
     def process_request(self,request,spider):
-        proxy = random.choice(PROXIES)
-        if check_proxy('http',proxy['ip_port']):
+        proxy = random.choice(PROXIES)   #随机选择代理IP
+        if check_proxy('http',proxy['ip_port']): #检查代理IP的可用性
             request.meta['proxy'] = 'http://%s' % proxy['ip_port']
-            request.meta['work'] = True
+            #request.meta['work'] = True
             if proxy['user_pass'] is not None:
                 # setup basic authentication for the proxy
                 encoded_user_pass = base64.encodestring(proxy['user_pass'])
                 request.headers['Proxy-Authorization'] = 'Basic' + encoded_user_pass
         else:
-            request.meta['work'] = False
+            #TODO 此时代理IP无效，删除该IP
+            #request.meta['work'] = False
+            logging.info("proxy ip not work,use local ip instead!!")
    
     def process_exception(self,request,exception,spider):
         proxy = request.meta['proxy']
@@ -47,6 +49,7 @@ class MayiHttpProxy():
         #request.meta['proxy'] = 'http://%s' % proxy 
         proxy = MayiHttpProxy.settings['SERVERIP']
         request.meta['proxy'] = 'http://%s' % proxy 
+        print "!!!!",request.meta['proxy']
         authHeader = get_proxy_authHeader(MayiHttpProxy.settings['APPKEY'],MayiHttpProxy.settings['SECRET']) 
         request.headers['Proxy-Authorization'] = authHeader
    

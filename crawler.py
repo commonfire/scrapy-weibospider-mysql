@@ -16,7 +16,6 @@ except Exception,e:
     print e
     
 @defer.inlineCallbacks
-
 def crawl():
     if len(sys.argv) == 3:
         if sys.argv[2] == 'keyuser':  #根据关键词搜索相关用户
