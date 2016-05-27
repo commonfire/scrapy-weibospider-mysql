@@ -44,107 +44,82 @@ class WeiboSpider(CrawlSpider):
     def start_requests(self):
         return [Request(url="http://weibo.com",method='get',callback=self.start_getweibo_info)]
 
-    def start_getweibo_info1(self,response):
-        logger.info(self.start_time)
-
     def start_getweibo_info(self,response):
-        if response.status == 200:
-            logger.info("response succeed!!")
+        db = MysqlStore();
+        #取出没有爬取过的且is_delete=0的重点人员
+        GetWeibopage.data['page'] = 1; getweibopage = GetWeibopage()
 
-            db = MysqlStore();
-            #取出没有爬取过的且is_delete=0的重点人员
-            GetWeibopage.data['page'] = 1; getweibopage = GetWeibopage()
-
-            for round in range(1): #遍历数据库的轮数
-                conn = db.get_connection()
-                sql1 = "select user_id from cauc_warning_man_test a \
-                        where a.is_search = 0 and a.is_delete = 0"          
-                cursor1 = db.select_operation(conn,sql1)
-                for user_id in cursor1.fetchall():
-                    user_id = user_id[0]
-                    logger.info("this is the unsearched user_id:%s",user_id)
+        for round in range(1): #遍历数据库的轮数
+            conn = db.get_connection()
+            sql1 = "select user_id from cauc_warning_man_test a \
+                    where a.is_search = 0 and a.is_delete = 0"          
+            cursor1 = db.select_operation(conn,sql1)
+            for user_id in cursor1.fetchall():
+                user_id = user_id[0]
+                logger.info("this is the unsearched user_id:%s",user_id)
                 
-                    
-                    #获取需要爬取的总页面数
-                    start_time = self.start_time;end_time = get_current_time('hour') 
-                    mainpage_url = "http://weibo.com/" + str(user_id) + "?is_ori=1&is_forward=1&is_text=1&is_pic=1&key_word=&start_time=" + start_time + "&end_time=" + end_time + "&is_search=1&is_searchadv=1&" 
-                    GetWeibopage.data['uid'] = user_id; 
-                    thirdload_url = mainpage_url + getweibopage.get_thirdloadurl()
-                    yield  Request(url=thirdload_url,cookies=random.choice(COOKIES),meta={'mainpage_url':mainpage_url,'uid':user_id,'is_search':0},callback=self.parse_total_page)
-                    
+                #获取需要爬取的总页面数
+                start_time = self.start_time;end_time = get_current_time('day') 
+                mainpage_url = "http://weibo.com/" + str(user_id) + "?is_ori=1&is_forward=1&is_text=1&is_pic=1&key_word=&start_time=" + start_time + "&end_time=" + end_time + "&is_search=1&is_searchadv=1&" 
+                GetWeibopage.data['uid'] = user_id; 
+                thirdload_url = mainpage_url + getweibopage.get_thirdloadurl()
+                yield  Request(url=thirdload_url,cookies=random.choice(COOKIES),meta={'mainpage_url':mainpage_url,'uid':user_id,'is_search':0},callback=self.parse_total_page)
+                
 
-                #取出已经爬取过is_search=1的且is_delete=0的预警人员
-                sql2 = "select user_id from cauc_warning_man_test a \
-                        where a.is_search = 1 and a.is_delete = 0"
-                cursor2 = db.select_operation(conn,sql2)
+            #取出已经爬取过is_search=1的且is_delete=0的预警人员
+            sql2 = "select user_id from cauc_warning_man_test a \
+                    where a.is_search = 1 and a.is_delete = 0"
+            cursor2 = db.select_operation(conn,sql2)
 
-                for user_id in cursor2.fetchall():
-                    user_id = user_id[0]
-                    logger.info("this is the searched user_id:%s",user_id)
+            for user_id in cursor2.fetchall():
+                user_id = user_id[0]
+                logger.info("this is the searched user_id:%s",user_id)
 
-                    start_time = get_time_by_interval(int(time.time()),86400,'hour');end_time = get_current_time('hour') #起始和结束间隔时间为1天(86400s),即过去一天的内容
-                    mainpage_url = "http://weibo.com/" + str(user_id) + "?is_ori=1&is_forward=1&is_text=1&is_pic=1&key_word=&start_time=" + start_time + "&end_time=" + end_time + "&is_search=1&is_searchadv=1&" 
-                    GetWeibopage.data['uid'] = user_id; 
-                    thirdload_url = mainpage_url + getweibopage.get_thirdloadurl()
-                    yield  Request(url=thirdload_url,cookies=random.choice(COOKIES),meta={'mainpage_url':mainpage_url,'uid':user_id,'is_search':1},callback=self.parse_total_page)
+                start_time = get_time_by_interval(int(time.time()),86400,'day');end_time = get_current_time('day') #起始和结束间隔时间为1天(86400s),即过去一天的内容
+                mainpage_url = "http://weibo.com/" + str(user_id) + "?is_ori=1&is_forward=1&is_text=1&is_pic=1&key_word=&start_time=" + start_time + "&end_time=" + end_time + "&is_search=1&is_searchadv=1&" 
+                GetWeibopage.data['uid'] = user_id; 
+                thirdload_url = mainpage_url + getweibopage.get_thirdloadurl()
+                yield  Request(url=thirdload_url,cookies=random.choice(COOKIES),meta={'mainpage_url':mainpage_url,'uid':user_id,'is_search':1},callback=self.parse_total_page)
 
-                #更新is_search标志位为1
-                sql3 = "update cauc_warning_man_test set is_search = 1 where is_search = 0 and is_delete = 0"
-                db.update_operation(conn,sql3)
-                db.close_connection(conn)
-        else:
-            logger.warning("the failed response status code %d !!",response.status)
-            #此时网络响应没有成功，重新获取cookie并请求
-            yield Request(url=response.request.url,cookies=random.choice(COOKIES),meta=response.meta,callback=self.start_getweibo_info)
+            #更新is_search标志位为1
+            sql3 = "update cauc_warning_man_test set is_search = 1 where is_search = 0 and is_delete = 0"
+            db.update_operation(conn,sql3)
+            db.close_connection(conn)
 
     def parse_total_page(self,response):
-        if response.status == 200:
-            logger.info("response succeed!!")
+        analyzer = Analyzer()
+        total_pq = analyzer.get_html(response.body,'script:contains("W_pages")')
+        friendcircle_analyzer = keyword_info_analyzer()
+        total_pages = friendcircle_analyzer.get_totalpages(total_pq) #需要爬取的微博内容页数
+        logger.info("the total_pages is: %d",total_pages)
+        
+        getweibopage = GetWeibopage()
+        mainpage_url = response.meta['mainpage_url']
+        user_id = response.meta['uid']
+        is_search = response.meta['is_search']
 
-            analyzer = Analyzer()
-            total_pq = analyzer.get_html(response.body,'script:contains("W_pages")')
-            friendcircle_analyzer = keyword_info_analyzer()
-            total_pages = friendcircle_analyzer.get_totalpages(total_pq) #需要爬取的微博内容页数
-            logger.info("the total_pages is: %d",total_pages)
-            
-            getweibopage = GetWeibopage()
-            mainpage_url = response.meta['mainpage_url']
-            user_id = response.meta['uid']
-            is_search = response.meta['is_search']
+        for page in range(2): #TODO 此处要更改为total_pages
+            GetWeibopage.data['uid'] = user_id
+            GetWeibopage.data['page'] = page + 1
+            firstload_url = mainpage_url + getweibopage.get_firstloadurl()
+            yield  Request(url=firstload_url,cookies=random.choice(COOKIES),meta={'uid':user_id,'is_search':is_search},callback=self.parse_load)
 
-            for page in range(1): #TODO 此处要更改为total_pages
-                GetWeibopage.data['uid'] = user_id
-                GetWeibopage.data['page'] = page + 1
-                firstload_url = mainpage_url + getweibopage.get_firstloadurl()
-                yield  Request(url=firstload_url,cookies=random.choice(COOKIES),meta={'uid':user_id,'is_search':is_search},callback=self.parse_load)
+            secondload_url = mainpage_url + getweibopage.get_secondloadurl()
+            yield  Request(url=secondload_url,cookies=random.choice(COOKIES),meta={'uid':user_id,'is_search':is_search},callback=self.parse_load)
 
-                secondload_url = mainpage_url + getweibopage.get_secondloadurl()
-                yield  Request(url=secondload_url,cookies=random.choice(COOKIES),meta={'uid':user_id,'is_search':is_search},callback=self.parse_load)
-
-                thirdload_url = mainpage_url + getweibopage.get_thirdloadurl()
-                yield  Request(url=thirdload_url,cookies=random.choice(COOKIES),meta={'uid':user_id,'is_search':is_search},callback=self.parse_load)
-        else:
-            logger.warning("the failed response status code %d !!",response.status)
-            #此时网络响应没有成功，重新获取cookie并请求
-            yield Request(url=response.request.url,cookies=random.choice(COOKIES),meta=response.meta,callback=self.parse_total_page)
+            thirdload_url = mainpage_url + getweibopage.get_thirdloadurl()
+            yield  Request(url=thirdload_url,cookies=random.choice(COOKIES),meta={'uid':user_id,'is_search':is_search},callback=self.parse_load)
 
     def parse_load(self,response):
-        if response.status == 200:
-            logger.info("response succeed!!")
+        item = WeibospiderItem()  #获取用户微博内容信息
+        analyzer = Analyzer()
+        friendcircle = FriendCircle()
+        total_pq = analyzer.get_html(response.body,'script:contains("WB_feed WB_feed_v3")')
+        item['uid'] = response.meta['uid']
+        item['content'] = analyzer.get_content(total_pq)
+        item['time'],item['timestamp'] = analyzer.get_time(total_pq)
 
-            item = WeibospiderItem()  #获取用户微博内容信息
-            analyzer = Analyzer()
-            friendcircle = FriendCircle()
-            total_pq = analyzer.get_html(response.body,'script:contains("WB_feed WB_feed_v3")')
-            item['uid'] = response.meta['uid']
-            item['content'] = analyzer.get_content(total_pq)
-            item['time'],item['timestamp'] = analyzer.get_time(total_pq)
-
-            weibo_analyzer = weibocontent_analyzer()
-            item['repost_nums'],item['comment_nums'],item['like_nums'] = weibo_analyzer.get_weibo_relative_args(total_pq)
-            yield item     
-        else:
-            logger.warning("the failed response status code %d !!",response.status)
-            #此时网络响应没有成功，重新获取cookie并请求
-            yield Request(url=response.request.url,cookies=random.choice(COOKIES),meta=response.meta,callback=self.parse_load)
+        weibo_analyzer = weibocontent_analyzer()
+        item['repost_nums'],item['comment_nums'],item['like_nums'] = weibo_analyzer.get_weibo_relative_args(total_pq)
+        yield item     
             

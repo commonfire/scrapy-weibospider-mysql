@@ -64,6 +64,7 @@ class WeibospiderPipeline(object):
             self._friendcirle_insert_helper(conn,item)  #插入朋友圈关系信息
 
     def _friendcirle_insert_helper(self,conn,item):
+        '''插入朋友圈关系信息'''
         for i in range(len(item['content'])):
             if item['atuser_nickname_list'][i] != {}:   #插入'@用户'朋友关系
                 for atuser in item['atuser_nickname_list'][i]:

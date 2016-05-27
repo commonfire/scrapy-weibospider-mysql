@@ -7,7 +7,7 @@ def get_current_time(scope = None):
     if scope is None:
         current_time_otherStyle = time.strftime("%Y-%m-%d-%H",timeArray)
         return current_time_otherStyle 
-    elif scope == 'hour':
+    elif scope == 'day':
         current_time_otherStyle = time.strftime("%Y-%m-%d",timeArray)
         return current_time_otherStyle 
         
@@ -25,7 +25,7 @@ def get_time_by_interval(current_timeStamp,interval,scope = None):
     if scope is None:
         subtracted_time_otherStyle = time.strftime("%Y-%m-%d-%H",timeArray)
         return subtracted_time_otherStyle 
-    elif scope == 'hour':
+    elif scope == 'day':
         subtracted_time_otherStyle = time.strftime("%Y-%m-%d",timeArray)
         return subtracted_time_otherStyle 
         
@@ -33,8 +33,8 @@ def get_time_by_interval(current_timeStamp,interval,scope = None):
 
 if __name__ == '__main__':
     timeStamp = int(time.time())           
-    print get_current_time('hour')
-    print get_time_by_interval(timeStamp,86400,'hour')
+    print get_current_time('day')
+    print get_time_by_interval(timeStamp,86400,'day')
     
 
     
