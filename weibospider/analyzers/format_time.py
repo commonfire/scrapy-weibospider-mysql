@@ -34,7 +34,7 @@ def get_time_by_interval(current_timeStamp,interval,scope = None):
 if __name__ == '__main__':
     timeStamp = int(time.time())           
     print get_current_time('day')
-    print get_time_by_interval(timeStamp,86400,'day')
+    print get_time_by_interval(timeStamp,int('86400'),'day')
     
 
     

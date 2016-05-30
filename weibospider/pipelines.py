@@ -66,6 +66,9 @@ class WeibospiderPipeline(object):
     def _friendcirle_insert_helper(self,conn,item):
         '''插入朋友圈关系信息'''
         for i in range(len(item['content'])):
+            #插入微博内容信息
+            conn.execute('''insert ignore into cauc_microblog_content(user_id,content,publish_time,publish_timestamp,repost_num,comment_num,like_num) values(%s,%s,%s,%s,%s,%s,%s)''',(str(item['uid']),item['content'][i],item['time'][i],item['timestamp'][i],item['repost_nums'][i],item['comment_nums'][i],item['like_nums'][i]))
+
             if item['atuser_nickname_list'][i] != {}:   #插入'@用户'朋友关系
                 for atuser in item['atuser_nickname_list'][i]:
                     conn.execute('''insert ignore cauc_microblog_atuser_info(user_id,atuser_alias,publish_time,publish_timestamp) values(%s,%s,%s,%s)''',(str(item['uid']),atuser,item['time'][i],item['timestamp'][i]))

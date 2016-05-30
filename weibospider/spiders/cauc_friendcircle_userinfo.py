@@ -22,6 +22,7 @@ from analyzer import Analyzer
 from analyzers.format_time import *
 from analyzers.keyword_info_analyzer import keyword_info_analyzer   
 from analyzers.friendcircle_analyzer import friendcircle_analyzer
+from analyzers.weibocontent_analyzer import weibocontent_analyzer
 from cookielist import COOKIES
 from datamysql import MysqlStore
 from dataoracle import OracleStore
@@ -41,8 +42,9 @@ class WeiboSpider(CrawlSpider):
     allowed_domains = ['weibo.com','sina.com.cn']
     settings = get_project_settings()
 
-    def __init__(self,start_time = None,**kwargs):
+    def __init__(self,start_time = None,interval = None,**kwargs):
         self.start_time = start_time
+        self.interval = interval
 
     def start_requests(self):
         return [Request(url="http://weibo.com",method='get',callback=self.start_getfriend_info)]
@@ -78,11 +80,12 @@ class WeiboSpider(CrawlSpider):
                 user_id = user_id[0]
                 logger.info("this is the searched user_id:%s",user_id)
 
-                start_time = get_time_by_interval(int(time.time()),86400,'day');end_time = get_current_time('day') #起始和结束间隔时间为1天(86400s)
+                #start_time = get_time_by_interval(int(time.time()),86400,'day');end_time = get_current_time('day') #起始和结束间隔时间为1天(86400s)
+                start_time = get_time_by_interval(int(time.time()),int(self.interval),'day');end_time = get_current_time('day') #起始和结束间隔时间为x天(由interval代表的秒换算而来)
                 mainpage_url = "http://weibo.com/" + str(user_id) + "?is_ori=1&is_forward=1&is_text=1&is_pic=1&key_word=&start_time=" + start_time + "&end_time=" + end_time + "&is_search=1&is_searchadv=1&" 
                 GetWeibopage.data['uid'] = user_id; 
                 thirdload_url = mainpage_url + getweibopage.get_thirdloadurl()
-                #yield  Request(url=thirdload_url,cookies=random.choice(COOKIES),meta={'mainpage_url':mainpage_url,'uid':user_id,'is_search':1},callback=self.parse_total_page)
+                yield  Request(url=thirdload_url,cookies=random.choice(COOKIES),meta={'mainpage_url':mainpage_url,'uid':user_id,'is_search':1},callback=self.parse_total_page)
 
             #更新is_search标志位为1
             sql3 = "update cauc_black_man set is_search = 1 where is_search = 0 and is_delete = 0"
@@ -129,13 +132,18 @@ class WeiboSpider(CrawlSpider):
                         userinfo_url = analyzer.get_userinfohref(total_pq)
                         yield Request(url=userinfo_url,cookies=random.choice(COOKIES),meta={'uid':response.meta['uid'],'is_friend':0},callback=self.parse_userinfo)
 
-        item = WeibospiderItem()  #获取用户微博信息及@用户信息
+        item = WeibospiderItem()  #获取用户微博信息及@用户与转发信息
         analyzer = Analyzer()
         friendcircle = FriendCircle()
         total_pq = analyzer.get_html(response.body,'script:contains("WB_feed WB_feed_v3")')
         item['uid'] = response.meta['uid']
         item['content'] = analyzer.get_content(total_pq)
         item['time'],item['timestamp'] = analyzer.get_time(total_pq)
+
+        weibo_analyzer = weibocontent_analyzer()
+        item['repost_nums'],item['comment_nums'],item['like_nums'] = weibo_analyzer.get_weibo_relative_args(total_pq)
+
+
         atuser_info,item['repost_user'] = analyzer.get_atuser_repostuser(total_pq)
         atuser_list = friendcircle.atuser_parser(atuser_info)
         item['atuser_nickname_list'] = atuser_list

@@ -38,8 +38,9 @@ class WeiboSpider(CrawlSpider):
     allowed_domains = ['weibo.com','sina.com.cn']
     settings = get_project_settings()
 
-    def __init__(self,start_time = None,**kwargs):
+    def __init__(self,start_time = None,interval = None,**kwargs):
         self.start_time = start_time
+        self.interval = interval
 
     def start_requests(self):
         return [Request(url="http://weibo.com",method='get',callback=self.start_getweibo_info)]
@@ -75,7 +76,8 @@ class WeiboSpider(CrawlSpider):
                 user_id = user_id[0]
                 logger.info("this is the searched user_id:%s",user_id)
 
-                start_time = get_time_by_interval(int(time.time()),86400,'day');end_time = get_current_time('day') #起始和结束间隔时间为1天(86400s),即过去一天的内容
+                #start_time = get_time_by_interval(int(time.time()),86400,'day');end_time = get_current_time('day') #起始和结束间隔时间为1天(86400s),即过去一天的内容
+                start_time = get_time_by_interval(int(time.time()),int(self.interval),'day');end_time = get_current_time('day') #起始和结束间隔时间为x天(由interval代表的秒换算而来)
                 mainpage_url = "http://weibo.com/" + str(user_id) + "?is_ori=1&is_forward=1&is_text=1&is_pic=1&key_word=&start_time=" + start_time + "&end_time=" + end_time + "&is_search=1&is_searchadv=1&" 
                 GetWeibopage.data['uid'] = user_id; 
                 thirdload_url = mainpage_url + getweibopage.get_thirdloadurl()

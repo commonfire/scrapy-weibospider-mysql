@@ -35,6 +35,8 @@ class WeiboSpider(CrawlSpider):
     allowed_domains = ['weibo.com','sina.com.cn']
     settings = get_project_settings()
 
+    def __init__(self,interval,**kwargs):
+        self.interval = interval 
 
     def start_requests(self):
         return [Request(url="http://weibo.com",method='get',callback=self.search_from_keywordDB)]
@@ -68,7 +70,8 @@ class WeiboSpider(CrawlSpider):
                 logger.info("this is the searched keyword:%s",keyword)
 
                 end_time = get_current_time()
-                start_time = get_time_by_interval(int(time.time()),3600)  #爬取3600秒，即1小时前的内容
+                #start_time = get_time_by_interval(int(time.time()),3600)  #爬取3600秒，即1小时前的内容
+                start_time = get_time_by_interval(int(time.time()),int(self.interval))  #爬取interval秒前的内容
                 
                 search_url = main_url + getsearchpage.get_searchurl_time(keyword,start_time,end_time)
                 yield Request(url=search_url,cookies=random.choice(COOKIES),meta={'search_url':search_url,'keyword':keyword},callback=self.parse_total_page)
