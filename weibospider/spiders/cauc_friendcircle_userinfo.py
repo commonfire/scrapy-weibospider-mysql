@@ -115,7 +115,7 @@ class WeiboSpider(CrawlSpider):
             yield  Request(url=secondload_url,cookies=random.choice(COOKIES),meta={'uid':user_id,'is_search':is_search},callback=self.parse_load)
 
             thirdload_url = mainpage_url + getweibopage.get_thirdloadurl()
-            yield  Request(url=thirdload_url,cookies=random.choice(COOKIES),meta={'uid':user_id,'is_search':is_search},callback=self.parse_load)
+            yield  Request(url=thirdload_url,cookies=random.choice(COOKIES),meta={'uid':user_id,'is_search':is_search},callback=self.parse_load,dont_filter=True)
 
     def parse_load(self,response):
         request_url = response.request.url
@@ -161,7 +161,6 @@ class WeiboSpider(CrawlSpider):
             if repostuser_alias: #repostuser_alias不为空，即有转发用户
                 friend_url = frc_analyzer.get_frienduid_url(repostuser_alias)
                 yield Request(url=friend_url,cookies=random.choice(COOKIES),meta={'uid':response.meta['uid'],'is_friend':2},callback=self.parse_friend_uid) #is_friend=2代表爬取转发用户基本信息 
-
 
 
     def parse_friend_uid(self,response):

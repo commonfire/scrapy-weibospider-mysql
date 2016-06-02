@@ -110,7 +110,7 @@ class WeiboSpider(CrawlSpider):
             yield  Request(url=secondload_url,cookies=random.choice(COOKIES),meta={'uid':user_id,'is_search':is_search},callback=self.parse_load)
 
             thirdload_url = mainpage_url + getweibopage.get_thirdloadurl()
-            yield  Request(url=thirdload_url,cookies=random.choice(COOKIES),meta={'uid':user_id,'is_search':is_search},callback=self.parse_load)
+            yield  Request(url=thirdload_url,cookies=random.choice(COOKIES),meta={'uid':user_id,'is_search':is_search},callback=self.parse_load,dont_filter=True)
 
     def parse_load(self,response):
         item = WeibospiderItem()  #获取用户微博内容信息

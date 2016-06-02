@@ -19,7 +19,7 @@ class MysqlStore:
         '''连接数据库'''
         try:
             conn = MySQLdb.connect(host=MysqlStore.settings['MYSQL_HOST'],user=MysqlStore.settings['MYSQL_USER'],passwd=MysqlStore.settings['MYSQL_PASSWD'],db=MysqlStore.settings['MYSQL_DBNAME'],port=3306)
-            conn.set_character_set('utf8mb4')
+            #conn.set_character_set('utf8mb4')
             #logger.warning('mysql_connectinon success!!')
             logger.info('mysql_connectinon success!!')
             return conn
