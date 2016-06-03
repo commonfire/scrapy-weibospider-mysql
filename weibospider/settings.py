@@ -38,16 +38,6 @@ USER_NAME = '18600299007'   #'13920979915'   #'18600299007'
 PASS_WORD = '19911007'      #'wangjie42685' #'19911007'
 PAGE_NUM = 1   #爬取微博内容页面数
 
-FOLLOW_PAGE_NUM = 1  #爬取用户关注列表页面数
-FOLLOWER_PAGE_NUM = 1  #爬取用户粉丝列表页面数
-
-SEARCH_PAGE_NUM = 1  #爬取基于关键词搜索的页面数
-
-#微博循环爬取时间间隔配置
-KEYWORD_INTERVAL = 600  #舆情关键词循环爬取间隔，单位：秒
-FRIENDCIRCAL_INTERVAL = 30  #重点人员朋友圈循环爬取间隔，单位：秒
-WEIBOCONTENT_INTERVAL = 30  #预警人员微博内容循环爬取间隔，单位：秒
-
 
 #图片下载配置0
 #IMAGES_STORE = '/home/hadoop_user/scrapy-weibospider/weibospider/userphoto'  #图片存储位置
@@ -55,8 +45,9 @@ IMAGES_STORE = '/home/hadoop_user/javaproject/weiboanalysis-1/WebContent/images/
 IMAGES_EXPIRES = 90          #图片失效期限天数
 IMAGES_THUMBS = {'small':(40,40)}  #设置图片缩略图长度和宽度
 
-#cookie失效期限设置
-EXPIRES = 10000000000
+#cookie失效期限设置，单位为秒
+EXPIRES = 345600 #4天
+
 #请求超时时间设置
 REQUEST_TIMEOUT = 5
 #日志log配置文件
