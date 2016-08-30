@@ -60,7 +60,7 @@ class friendcircle_analyzer:
 
     def get_userinfo_url(self,uid):
         '''根据用户uid获取请求用户基本信息的请求url'''
-        return "http://weibo.com/p/100505" + str(uid) + "/info?mod=pedit_more"
+        return "http://weibo.com/" + str(uid) + "/info"
 
 if __name__ == "__main__":
     a = friendcircle_analyzer()
