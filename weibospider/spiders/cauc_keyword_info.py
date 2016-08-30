@@ -85,11 +85,12 @@ class WeiboSpider(CrawlSpider):
     def parse_total_page(self,response):
         '''获取需要爬取的搜索结果总页数'''
         analyzer = Analyzer()
+        #logger.info(response.body)
         total_pq = analyzer.get_html(response.body,'script:contains("W_pages")')
         keyword_analyzer = keyword_info_analyzer()
         total_pages = keyword_analyzer.get_totalpages(total_pq)  #需要爬取的搜索结果总页数
         logger.info("the total_pages is: %d",total_pages)
-        for page in range(1):  #TODO 此处更改为total_pages
+        for page in range(10):  #TODO 此处更改为total_pages
             search_url = response.meta['search_url'] + str(page + 1)  #此处添加for循环total_pages
             yield Request(url=search_url,cookies=random.choice(COOKIES),meta={'keyword':response.meta['keyword']},callback=self.parse_keyword_info)
 
@@ -100,8 +101,24 @@ class WeiboSpider(CrawlSpider):
         total_pq = analyzer.get_html(response.body,'script:contains("feed_content wbcon")') 
         keyword_analyzer = keyword_info_analyzer()
         if total_pq is not None:
-            item['keyword_uid'],item['keyword_alias'],item['keyword_content'],item['keyword_publish_time'] = keyword_analyzer.get_keyword_info(total_pq)
+            item['keyword_uid'],item['keyword_alias'],item['keyword_content'],item['keyword_publish_time'],item["repost_nums"],item["comment_nums"],item["like_nums"] = keyword_analyzer.get_keyword_info(total_pq)
             item['keyword'] = response.meta['keyword']
-            if item['keyword_uid']: #即此时item['keyword_uid']不为空，有解析内容
-                yield item
-
+            for uid in item['keyword_uid']:
+                user_url = 'http://weibo.com/'+uid+'/info'    
+                yield Request(url=user_url,cookies=random.choice(COOKIES),meta={'user_id':uid},callback=self.get_user_info)
+            #logger.info(item['keyword_uid'])
+            if item['keyword_uid']:
+                if item['keyword_uid'][0]: #即此时item['keyword_uid']代表元素0不为空，表示整体list有解析内容
+                    yield item
+    def get_user_info(self,response):
+        item =WeibospiderItem()
+        item['uid'] = response.meta['user_id']
+        analyzer = Analyzer()
+        keyword_analyzer = keyword_info_analyzer()
+        total_pq1 = analyzer.get_html(response.body,'script:contains("pf_photo")')
+        item['image_urls'] = analyzer.get_userphoto_url(total_pq1) + "?uid=" + str(response.meta['user_id'])
+        total_pq2 = analyzer.get_html(response.body,'script:contains("PCD_text_b")')
+        total_pq3 = analyzer.get_html(response.body,'script:contains("PCD_counter")')
+        item['userinfo'] = analyzer.get_userinfo(total_pq2,total_pq3)
+#        logger.info(item)
+        yield item

@@ -50,7 +50,7 @@ class WeibospiderPipeline(object):
     def _keyword_info_insert(self,conn,item,spider):
         '''舆情关键词检索信息插入'''
         for i in range(len(item['keyword_uid'])):
-            conn.execute('''insert ignore into cauc_keyword_info(user_id,user_alias,keyword,publish_time,content,content_md5) values(%s,%s,%s,%s,%s,md5(%s))''',(item['keyword_uid'][i],item['keyword_alias'][i],str(item['keyword']),item['keyword_publish_time'][i],item['keyword_content'][i],item['keyword_content'][i])) #设置符合主键实现insert ignore的不重复插入
+            conn.execute('''insert ignore into cauc_keyword_info(user_id,user_alias,keyword,publish_time,content,content_md5,repost_num,comment_num,like_num) values(%s,%s,%s,%s,%s,md5(%s),%s,%s,%s)''',(item['keyword_uid'][i],item['keyword_alias'][i],str(item['keyword']),item['keyword_publish_time'][i],item['keyword_content'][i],item['keyword_content'][i],item["repost_nums"][i],item["comment_nums"][i],item["like_nums"][i])) #设置符合主键实现insert ignore的不重复插入
 
     def _friendcircle_info_insert(self,conn,item,spider):
         '''重点人员朋友圈信息插入'''

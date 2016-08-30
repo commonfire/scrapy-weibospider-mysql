@@ -16,7 +16,9 @@ class keyword_info_analyzer:
         self.keyword_alias = []          #与关键词相关的用户昵称 
         self.keyword_publish_time = []   #与关键词相关用户发表微博时间
         self.keyword_content = []        #与关键词相关用户发表微博内容
-
+        self.keyword_content_repost_num = []     #与关键词相关的微博转发数
+        self.keyword_content_like_num = []       #与关键词相关的微博点赞数 
+        self.keyword_content_comment_num = []    #与关键词相关的微博评论数
     def get_totalpages(self,total_pq):
         '''获取关键词搜索结果总页数'''
         if total_pq is None:  #此时没有页数列表，即只有一页
@@ -35,11 +37,12 @@ class keyword_info_analyzer:
         if not data0: #此时data0没有匹配结果，表示页面有相关搜索结果
             data1 = total_pq("div.feed_content")
             data2 = total_pq("div.content").children("div.feed_from")
+            data3 = total_pq("ul.feed_action_row4")
             
-            for dku1,dku2 in zip(data1,data2):
+            for dku1,dku2,dku3 in zip(data1,data2,data3):
                 dku1 = pq(dku1)
                 dku2 = pq(dku2)
-
+                dku3 = pq(dku3)
                 a_tag = dku1.children('a')
                 if len(a_tag) >= 2 and (a_tag.eq(1).attr('class') is not None) and (a_tag.eq(1).attr('class') == "approve_co"):
                     logger.info(" 该账号为企业认证账号company_approve!!")
@@ -62,10 +65,28 @@ class keyword_info_analyzer:
 
                 time = dku2.find('a').eq(0).attr("title")
                 self.keyword_publish_time.append(time)
+               
+                repost_num = dku3.find("li").eq(1).find("em").text()       #获取微博转发数
+                if repost_num == "":
+                    self.keyword_content_repost_num.append(0)
+                else:
+                    self.keyword_content_repost_num.append(repost_num)
+                
+                comment_num = dku3.find("li").eq(2).find("em").text()      #获取微博评论数
+                if comment_num == "":
+                    self.keyword_content_comment_num.append(0)
+                else:
+                    self.keyword_content_comment_num.append(comment_num)
+                
+                like_num = dku3.find("li").eq(3).find("em").text()      #获取微博点赞数
+                if like_num != "":
+                    self.keyword_content_like_num.append(like_num)
+                else:
+                    self.keyword_content_like_num.append(0)
         else:
             logger.info("没有关键词搜索结果")
 
-        return self.keyword_uid,self.keyword_alias,self.keyword_content,self.keyword_publish_time
+        return self.keyword_uid,self.keyword_alias,self.keyword_content,self.keyword_publish_time,self.keyword_content_repost_num,self.keyword_content_comment_num,self.keyword_content_like_num
 
 
 if __name__ == '__main__':
